@@ -1,0 +1,9 @@
+[submodule "Orbitals"]
+	path = Orbitals
+	url = https://github.com/gutow/Orbitals.git
+[submodule "VSEPR_tutorial"]
+	path = VSEPR_tutorial
+	url = https://github.com/gutow/VSEPR_tutorial.git
+[submodule "Lewis_Tutorial"]
+	path = Lewis_Tutorial
+	url = https://github.com/gutow/Lewis_Tutorial.git
