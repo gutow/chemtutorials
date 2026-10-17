@@ -31,8 +31,10 @@ if (this.currentObject != null) {
 this.currentObject.setFont(this.currentFont, true);
 this.currentObject.setFontScale(0);
 } else if (this.isAll) {
-for (var t, $t = this.objects.values().iterator (); $t.hasNext()&& ((t = $t.next ()) || true);) t.setFont(this.currentFont, true);
-
+for (var t, $t = this.objects.values().iterator (); $t.hasNext()&& ((t = $t.next ()) || true);) {
+t.setFont(this.currentFont, true);
+t.setFontScale(0);
+}
 }return;
 }if ("allOff" === propertyName) {
 this.currentObject = null;
@@ -188,4 +190,4 @@ if (haveScripts) this.vwr.setCursor(0);
 return false;
 }, "~N,~N,JU.BS");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

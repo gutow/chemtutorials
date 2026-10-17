@@ -1,5 +1,5 @@
 Clazz.declarePackage("JV");
-Clazz.load(["java.lang.Enum", "J.api.JmolViewer", "$.PlatformViewer", "J.atomdata.AtomDataServer", "java.util.Hashtable", "JU.P3"], "JV.Viewer", ["java.util.Arrays", "JU.AU", "$.BS", "$.CU", "$.DF", "$.Lst", "$.M3", "$.P3i", "$.PT", "$.Quat", "$.Rdr", "$.SB", "J.adapter.smarter.SmarterJmolAdapter", "J.api.Interface", "J.atomdata.RadiusData", "J.c.FIL", "$.STER", "$.VDW", "J.i18n.GT", "JM.Measurement", "$.ModelSet", "JS.SV", "$.T", "J.thread.TimeoutThread", "JU.BSUtil", "$.C", "$.CommandHistory", "$.Elements", "$.Escape", "$.GData", "$.JmolMolecule", "$.Logger", "$.Parser", "$.TempArray", "JV.ActionManager", "$.AnimationManager", "$.ColorManager", "$.FileManager", "$.GlobalSettings", "$.JC", "$.ModelManager", "$.SelectionManager", "$.ShapeManager", "$.StateManager", "$.StatusManager", "$.TransformManager", "JV.binding.Binding"], function(){
+Clazz.load(["java.lang.Enum", "J.api.JmolViewer", "$.PlatformViewer", "J.atomdata.AtomDataServer", "java.util.Hashtable", "JU.P3"], "JV.Viewer", ["java.util.Arrays", "JU.AU", "$.BS", "$.Base64", "$.CU", "$.DF", "$.Lst", "$.M3", "$.P3i", "$.PT", "$.Quat", "$.Rdr", "$.SB", "J.adapter.smarter.SmarterJmolAdapter", "J.api.Interface", "J.atomdata.RadiusData", "J.c.FIL", "$.STER", "$.VDW", "J.i18n.GT", "JM.Measurement", "$.ModelSet", "JS.SV", "$.T", "J.thread.TimeoutThread", "JU.BSUtil", "$.C", "$.CommandHistory", "$.Elements", "$.Escape", "$.GData", "$.JmolMolecule", "$.Logger", "$.Parser", "$.TempArray", "JV.ActionManager", "$.AnimationManager", "$.ColorManager", "$.FileManager", "$.GlobalSettings", "$.JC", "$.ModelManager", "$.SelectionManager", "$.ShapeManager", "$.StateManager", "$.StatusManager", "$.TransformManager", "JV.binding.Binding"], function(){
 var c$ = Clazz.decorateAsClass(function(){
 this.testAsync = false;
 this.autoExit = false;
@@ -873,7 +873,7 @@ return null;
 Clazz.defineMethod(c$, "showSystemInfo", 
 function(){
 if (!this.isSilent && !this.systemInfoShown) {
-JU.Logger.info("(C) 2015 Jmol Development" + "\nJmol Version: " + JV.Viewer.getJmolVersion() + "\njava.vendor: " + JV.Viewer.strJavaVendor + "\njava.version: " + JV.Viewer.strJavaVersion + "\nos: " + JV.Viewer.strOSName + " " + System.getProperty("os.arch", "") + "\nAccess: " + this.access + "\nmemory: " + this.getP("_memory") + "\nprocessors available: " + JV.Viewer.nProcessors + "\nuseCommandThread: " + this.useCommandThread + (!this.isApplet ? "" : "\nappletId:" + this.htmlName + (this.isSignedApplet ? " (signed)" : "")));
+JU.Logger.info("(C) 2005-2026 Jmol Development" + "\nJmol Version: " + JV.Viewer.getJmolVersion() + "\njava.vendor: " + JV.Viewer.strJavaVendor + "\njava.version: " + JV.Viewer.strJavaVersion + "\nos: " + JV.Viewer.strOSName + " " + System.getProperty("os.arch", "") + "\nAccess: " + this.access + "\nmemory: " + this.getP("_memory") + "\nprocessors available: " + JV.Viewer.nProcessors + "\nuseCommandThread: " + this.useCommandThread + (!this.isApplet ? "" : "\nappletId:" + this.htmlName + (this.isSignedApplet ? " (signed)" : "")));
 }});
 Clazz.defineMethod(c$, "notifyMouseClicked", 
 function(x, y, action, mode){
@@ -993,7 +993,8 @@ this.stm.setCrystallographicDefaults();
 this.setNewRotationCenter(this.getUnitCellCenter());
 } else {
 this.setAxesMode(603979809);
-}this.prevFrame = -2147483648;
+}this.setBooleanPropertyTok("mode2d", 603979882, false);
+this.prevFrame = -2147483648;
 if (!this.tm.spinOn) this.setSync();
 }, "~B");
 Clazz.overrideMethod(c$, "homePosition", 
@@ -1076,20 +1077,20 @@ this.tm.navigateKey(keyWhere, modifiers);
 if (!this.tm.vibrationOn && keyWhere != 0) this.refresh(1, "Viewer:navigate()");
 }, "~N,~N");
 Clazz.defineMethod(c$, "move", 
-function(eval, dRot, dZoom, dTrans, dSlab, floatSecondsTotal, fps){
-this.tm.move(eval, dRot, dZoom, dTrans, dSlab, floatSecondsTotal, fps);
-this.moveUpdate(floatSecondsTotal);
+function(eval, dRot, dZoom, dTrans, dSlab, secondsTotal, fps){
+this.tm.move(eval, dRot, dZoom, dTrans, dSlab, secondsTotal, fps);
+this.moveUpdate(secondsTotal);
 }, "J.api.JmolScriptEvaluator,JU.V3,~N,JU.V3,~N,~N,~N");
 Clazz.defineMethod(c$, "moveTo", 
-function(eval, floatSecondsTotal, center, rotAxis, degrees, rotationMatrix, zoom, xTrans, yTrans, rotationRadius, navCenter, xNav, yNav, navDepth, cameraDepth, cameraX, cameraY){
-if (!this.haveDisplay) floatSecondsTotal = 0;
+function(eval, secondsTotal, center, rotAxis, degrees, rotationMatrix, zoom, xTrans, yTrans, rotationRadius, navCenter, xNav, yNav, navDepth, cameraDepth, cameraX, cameraY){
+if (!this.haveDisplay) secondsTotal = 0;
 this.setTainted(true);
-this.tm.moveTo(eval, floatSecondsTotal, center, rotAxis, degrees, rotationMatrix, zoom, xTrans, yTrans, rotationRadius, navCenter, xNav, yNav, navDepth, cameraDepth, cameraX, cameraY);
+this.tm.moveTo(eval, secondsTotal, center, rotAxis, degrees, rotationMatrix, zoom, xTrans, yTrans, rotationRadius, navCenter, xNav, yNav, navDepth, cameraDepth, cameraX, cameraY);
 }, "J.api.JmolScriptEvaluator,~N,JU.P3,JU.V3,~N,JU.M3,~N,~N,~N,~N,JU.P3,~N,~N,~N,~N,~N,~N");
 Clazz.defineMethod(c$, "moveUpdate", 
-function(floatSecondsTotal){
-if (floatSecondsTotal > 0) this.requestRepaintAndWait("moveUpdate");
- else if (floatSecondsTotal == 0) this.setSync();
+function(secondsTotal){
+if (secondsTotal > 0) this.requestRepaintAndWait("moveUpdate");
+ else if (secondsTotal == 0) this.setSync();
 }, "~N");
 Clazz.defineMethod(c$, "navigatePt", 
 function(center){
@@ -1783,6 +1784,11 @@ if (repEmpty) strModel = JU.PT.rep(strModel, "" + newLine, "");
 }, "~S,~S");
 Clazz.defineMethod(c$, "openStringInlineParamsAppend", 
 function(strModel, htParams, isAppend){
+{
+return this.openStringInlineParamsAppend0(strModel, htParams, isAppend);
+}}, "~S,java.util.Map,~B");
+Clazz.defineMethod(c$, "openStringInlineParamsAppend0", 
+function(strModel, htParams, isAppend){
 htParams = this.setLoadParameters(htParams, isAppend);
 var loadScript = htParams.get("loadScript");
 var isLoadCommand = htParams.containsKey("isData");
@@ -1793,8 +1799,9 @@ if (type.equals("spt")) {
 return "cannot open script inline";
 }}if (loadScript == null) loadScript =  new JU.SB();
 if (!isAppend) this.zap(true, false, false);
-if (!isLoadCommand) this.getStateCreator().getInlineData(loadScript, strModel, isAppend, htParams.get("appendToModelIndex"), this.g.defaultLoadFilter);
-var atomSetCollection = this.fm.createAtomSetCollectionFromString(strModel, htParams, isAppend);
+if (!isLoadCommand) {
+this.getStateCreator().getInlineData(loadScript, strModel, isAppend, htParams.get("appendToModelIndex"), this.g.defaultLoadFilter);
+}var atomSetCollection = this.fm.createAtomSetCollectionFromString(strModel, htParams, isAppend);
 return this.createModelSetAndReturnError(atomSetCollection, isAppend, loadScript, htParams);
 }, "~S,java.util.Map,~B");
 Clazz.defineMethod(c$, "openStringsInlineParamsAppend", 
@@ -1813,6 +1820,11 @@ function(){
 return this.g.getParameter("dataseparator", true);
 });
 Clazz.defineMethod(c$, "createModelSetAndReturnError", 
+function(atomSetCollection, isAppend, loadScript, htParams){
+{
+return this.createModelSetAndReturnError0(atomSetCollection, isAppend, loadScript, htParams);
+}}, "~O,~B,JU.SB,java.util.Map");
+Clazz.defineMethod(c$, "createModelSetAndReturnError0", 
 function(atomSetCollection, isAppend, loadScript, htParams){
 JU.Logger.startTimer("creating model");
 var fullPathName = this.fm.getFullPathName(false);
@@ -2024,6 +2036,11 @@ this.smilesMatcher = null;
 if (this.modelkit != null) this.modelkit.clearAtomConstraints();
 });
 Clazz.defineMethod(c$, "zap", 
+function(notify, resetUndo, zapModelKit){
+{
+this.zap0(notify, resetUndo, zapModelKit);
+}}, "~B,~B,~B");
+Clazz.defineMethod(c$, "zap0", 
 function(notify, resetUndo, zapModelKit){
 this.clearThreads();
 if (this.mm.modelSet == null) {
@@ -2321,7 +2338,7 @@ Clazz.defineMethod(c$, "setCurrentCage",
 function(isosurfaceId){
 var data =  Clazz.newArray(-1, [isosurfaceId, null]);
 this.shm.getShapePropertyData(24, "unitCell", data);
-this.ms.setModelCage(this.am.cmi, data[1]);
+this.ms.setModelCage(this.am.cmi, data[1], true);
 }, "~S");
 Clazz.defineMethod(c$, "addUnitCellOffset", 
 function(pt){
@@ -2822,7 +2839,7 @@ if (this.eval != null) this.eval.pauseExecution(true);
 });
 Clazz.defineMethod(c$, "resolveDatabaseFormat", 
 function(fileName){
-return (JV.Viewer.hasDatabasePrefix(fileName) || fileName.indexOf("cactus.nci.nih.gov/chemical/structure") >= 0 ? this.setLoadFormat(false, fileName, fileName.charAt(0), false) : fileName);
+return JV.JC.updateURL(JV.Viewer.hasDatabasePrefix(fileName) || fileName.indexOf("cactus.nci.nih.gov/chemical/structure") >= 0 ? this.setLoadFormat(false, fileName, fileName.charAt(0), false) : fileName);
 }, "~S");
 c$.hasDatabasePrefix = Clazz.defineMethod(c$, "hasDatabasePrefix", 
 function(fileName){
@@ -2836,12 +2853,17 @@ Clazz.defineMethod(c$, "setLoadFormat",
 function(isSurface, name, type, withPrefix){
 var format = null;
 var id = name.substring(1);
-switch ((type).charCodeAt(0)) {
+var suffix = "";
+if (name.endsWith("#_DOCACHE_")) {
+suffix = "#_DOCACHE_";
+name = name.substring(0, name.length - suffix.length);
+id = id.substring(0, id.length - suffix.length);
+}switch ((type).charCodeAt(0)) {
 case 99:
-return name;
+return name + suffix;
 case 104:
 if (this.g.checkCIR) this.checkCIR(false);
-return this.g.nihResolverFormat + name.substring(name.indexOf("/structure") + 10);
+return this.g.nihResolverFormat + name.substring(name.indexOf("/structure") + 10) + suffix;
 case 61:
 if (name.startsWith("==")) {
 id = id.substring(1);
@@ -2863,54 +2885,58 @@ id = id.substring(0, pt);
 }if (id.indexOf("_") < 0) id = this.getSymTemp().getSpaceGroupJSON("AFLOWLIB", id, index);
 }id = JV.JC.resolveDataBase(database, id, null);
 if (id != null && id.startsWith("'")) id = this.evaluateExpression(id).toString();
-return (id == null || id.length == 0 ? name : id);
+name = (id == null || id.length == 0 ? name : id);
 } catch (e) {
 if (Clazz.exceptionOf(e, Exception)){
-return name;
 } else {
 throw e;
 }
 }
-}if (!isSurface && id.endsWith(".bcif")) {
+return name + suffix;
+}name = null;
+if (!isSurface && id.endsWith(".bcif")) {
 id = id.substring(0, id.indexOf(".bcif"));
-return JV.JC.resolveDataBase("bcif", id.toLowerCase(), null);
+name = JV.JC.resolveDataBase("bcif", id.toLowerCase(), null);
 }if (id.endsWith(".mmtf")) {
 id = id.substring(0, id.indexOf(".mmtf"));
-return JV.JC.resolveDataBase("mmtf", id.toUpperCase(), null);
-}format = this.g.loadFormat;
+name = JV.JC.resolveDataBase("mmtf", id.toUpperCase(), null);
+}if (name != null) return name + suffix;
+format = this.g.loadFormat;
 }case 35:
 if (format == null) format = this.g.pdbLoadLigandFormat;
-return JV.JC.resolveDataBase(null, id, format);
+return JV.JC.resolveDataBase(null, id, format) + suffix;
 case 42:
 if (id.equals("?") && (id = this.getDBID("PDB ID from EBI")) == null) return null;
+var ret = null;
 var pt = name.lastIndexOf("/");
 if (name.startsWith("*dom/")) {
 id = name.substring(pt + 1);
 format = (pt > 4 ? name.substring(5) : "mappings");
-return JU.PT.rep(JV.JC.resolveDataBase("map", id, null), "%TYPE", format);
+ret = JU.PT.rep(JV.JC.resolveDataBase("map", id, null), "%TYPE", format);
 } else if (name.startsWith("*val/")) {
 id = name.substring(pt + 1);
 format = (pt > 4 ? name.substring(5) : "validation/outliers/all");
-return JU.PT.rep(JV.JC.resolveDataBase("map", id, null), "%TYPE", format);
+ret = JU.PT.rep(JV.JC.resolveDataBase("map", id, null), "%TYPE", format);
 } else if (name.startsWith("*rna3d/")) {
 id = name.substring(pt + 1);
 format = (pt > 6 ? name.substring(6) : "loops");
-return JU.PT.rep(JV.JC.resolveDataBase("rna3d", id, null), "%TYPE", format);
+ret = JU.PT.rep(JV.JC.resolveDataBase("rna3d", id, null), "%TYPE", format);
 } else if (name.startsWith("*dssr--")) {
 id = name.substring(pt + 1);
 id = JV.JC.resolveDataBase("dssr", id, null);
-return id + "%20" + JU.PT.rep(name.substring(5, pt), " ", "%20");
+ret = id + "%20" + JU.PT.rep(name.substring(5, pt), " ", "%20");
 } else if (name.startsWith("*dssr/")) {
 id = name.substring(pt + 1);
-return JV.JC.resolveDataBase("dssr", id, null);
+ret = JV.JC.resolveDataBase("dssr", id, null);
 } else if (name.startsWith("*dssr1/")) {
 id = name.substring(pt + 1);
-return JV.JC.resolveDataBase("dssr1", id, null);
-}var pdbe = "pdbe";
+ret = JV.JC.resolveDataBase("dssr1", id, null);
+}if (ret != null) return ret + suffix;
+var pdbe = "pdbe";
 if (id.length == 5 && id.charAt(4) == '*') {
 pdbe = "pdbe2";
 id = id.substring(0, 4);
-}return JV.JC.resolveDataBase(pdbe, id, null);
+}return JV.JC.resolveDataBase(pdbe, id, null) + suffix;
 case 58:
 format = this.g.pubChemFormat;
 if (id.equals("?") && (id = this.getDBID("structure from PubChem")) == null) return null;
@@ -2947,7 +2973,7 @@ id = id.$replace(':', '/');
 } else {
 if (fl.startsWith("name:")) id = id.substring(5);
 id = "name/" + JU.PT.escapeUrl(id);
-}}return JU.PT.formatStringS(format, "FILE", id);
+}}return JU.PT.formatStringS(format, "FILE", id) + suffix;
 case 36:
 this.checkCIR(false);
 if (id.equals("?") && (id = this.getDBID("structure from NCI/CADD")) == null) return null;
@@ -2972,7 +2998,7 @@ throw e;
 }
 }
 }id = JU.PT.escapeUrl(id);
-return JV.JC.resolveDataBase("smiles2d", id, null);
+return JV.JC.resolveDataBase("smiles2d", id, null) + suffix;
 }case 77:
 case 78:
 case 50:
@@ -3005,7 +3031,7 @@ default:
 format = this.g.smilesUrlFormat;
 break;
 }
-return (withPrefix ? "MOL3D::" : "") + JU.PT.formatStringS(format, "FILE", id);
+return (withPrefix ? "MOL3D::" : "") + JU.PT.formatStringS(format, "FILE", id) + suffix;
 case 63:
 case 45:
 case 95:
@@ -3052,17 +3078,17 @@ id = id.substring(0, pt);
 }} else {
 if (!checkXray) return null;
 emdext = null;
-}}if (emdext != null) return JV.JC.resolveDataBase("emdbmap" + (type == '-' ? "server" : ""), id, null) + emdext;
+}}if (emdext != null) return JV.JC.resolveDataBase("emdbmap" + (type == '-' ? "server" : ""), id, null) + emdext + suffix;
 }id = JV.JC.resolveDataBase((isDiff ? "pdbemapdiff" : "pdbemap") + (type == '-' ? "server" : ""), id, null);
 if ("cif".equals(ciftype)) {
 id = id.$replace("bcif", "cif");
 }break;
 }
-return id;
+return id + suffix;
 }, "~B,~S,~S,~B");
 Clazz.defineMethod(c$, "getDBID", 
 function(type){
-return this.prompt("load a " + type, "", null, false);
+return this.prompt("load a " + type, "", false);
 }, "~S");
 Clazz.defineMethod(c$, "checkCIR", 
 function(forceCheck){
@@ -3379,7 +3405,9 @@ this.getConsole();
 }, "~B");
 Clazz.defineMethod(c$, "getConsole", 
 function(){
+var addCallBack = (this.sm.cbl == null && this.appConsole == null);
 this.getProperty("DATA_API", "getAppConsole", Boolean.TRUE);
+if (addCallBack && Clazz.instanceOf(this.appConsole,"J.api.JmolCallbackListener")) this.setJmolCallbackListener(this.appConsole);
 return this.appConsole;
 });
 Clazz.overrideMethod(c$, "getParameter", 
@@ -6317,9 +6345,9 @@ function(fileName, type, modelIndex, parameters){
 return this.getOutputManager().writeFileData(fileName, type, modelIndex, parameters);
 }, "~S,~S,~N,~A");
 Clazz.defineMethod(c$, "getPdbData", 
-function(modelIndex, type, bsAtoms, parameters, oc, getStructure){
-return this.getPropertyManager().getPdbData(modelIndex, type, bsAtoms == null ? this.bsA() : bsAtoms, parameters, oc, getStructure);
-}, "~N,~S,JU.BS,~A,JU.OC,~B");
+function(modelIndex, tok, type, bsAtoms, parameters, oc, getStructure){
+return this.getPropertyManager().getPdbData(modelIndex, tok, type, bsAtoms == null ? this.bsA() : bsAtoms, parameters, oc, getStructure);
+}, "~N,~N,~S,JU.BS,~A,JU.OC,~B");
 Clazz.defineMethod(c$, "getGroupsWithin", 
 function(nResidues, bs){
 return this.ms.getGroupsWithin(nResidues, bs);
@@ -6431,9 +6459,21 @@ return (m != null && "2D".equals(m.auxiliaryInfo.get("dimension")));
 }, "JU.BS");
 Clazz.defineMethod(c$, "alert", 
 function(msg){
-this.prompt(msg, null, null, true);
+this.prompt(msg, null, true);
 }, "~S");
 Clazz.defineMethod(c$, "prompt", 
+function(label, data, asButtons){
+try {
+return this.promptButtons(label, data, null, asButtons);
+} catch (e) {
+if (Clazz.exceptionOf(e, Exception)){
+return null;
+} else {
+throw e;
+}
+}
+}, "~S,~S,~B");
+Clazz.defineMethod(c$, "promptButtons", 
 function(label, data, list, asButtons){
 return (this.$isKiosk ? "null" : this.apiPlatform.prompt(label, data, list, asButtons));
 }, "~S,~S,~A,~B");
@@ -7346,6 +7386,18 @@ Clazz.defineMethod(c$, "pluginRequest",
 function(name, action, value){
 return this.sm.processPluginRequest(name, action, value);
 }, "~S,~S,~O");
+Clazz.defineMethod(c$, "getCurrentModelFile", 
+function(fname, asBytes){
+if (fname == null) fname = this.getParameter("_modelFile");
+if (("" + fname).equals("null")) {
+var s = this.ms.getInlineData(this.am.cmi);
+return (!asBytes ? s : s.startsWith(";base64,") ? JU.Base64.decodeBase64(s) : s.getBytes());
+}return (asBytes ? this.fm.getFileAsBytes(fname, null) : this.getFileAsString(fname));
+}, "~S,~B");
+Clazz.defineMethod(c$, "movetoHome", 
+function(eval, secondsTotal){
+this.moveTo(eval, secondsTotal, null, JV.JC.axisZ, 0, null, 100, 0, 0, 0, null, NaN, NaN, NaN, NaN, NaN, NaN);
+}, "JS.ScriptEval,~N");
 c$.$Viewer$1$=function(){
 /*if5*/;(function(){
 var c$ = Clazz.declareAnonymous(JV, "Viewer$1", null, Runnable);
@@ -7384,4 +7436,4 @@ c$.isHighPrecision = false;
 {
 {
 }}});
-;//5.0.1-v7 Fri Jun 12 11:30:14 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

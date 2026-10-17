@@ -200,4 +200,4 @@ if (this.standardVector && !vib.isFrom000) this.g3d.fillCylinderBits(2, this.dia
 }if (this.drawCap) this.g3d.fillConeScreen3f(2, this.headWidthPixels, this.screenArrowHead, this.screenVectorEnd, false);
 }, "JM.Atom,JU.Vibration");
 });
-;//5.0.1-v7 Fri Jun 12 11:30:14 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026

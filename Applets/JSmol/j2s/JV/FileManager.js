@@ -331,6 +331,7 @@ if (names == null || names[0] == null || names.length < 2) return  Clazz.newArra
 var name = names[0];
 var fullPath = JV.FileManager.fixDOSName(names[0]);
 name = JU.Rdr.getZipRoot(name);
+if (name.endsWith("#_DOCACHE_")) name = name.substring(0, name.length - "#_DOCACHE_".length);
 var errMsg = this.getBufferedInputStreamOrErrorMessageFromName(name, fullPath, false, !getStream, null, false, !getStream);
 ret[0] = fullPath;
 if ((typeof(errMsg)=='string')) ret[1] = errMsg;
@@ -444,7 +445,7 @@ if (errMsg[0] != null) {
 if (asBytes) return  Clazz.newByteArray (0, 0);
 bdata.put("_ERROR_", errMsg[0]);
 return bdata;
-}if (asBytes) return  Clazz.newByteArray (0, 0);
+}if (asBytes) return bytes;
 t = JU.Rdr.getBIS(bytes);
 } else {
 var data =  new Array(2);
@@ -521,6 +522,8 @@ if (name != null && name.startsWith(";base64,")) {
 bytes = JU.Base64.decodeBase64(name);
 } else if (Clazz.instanceOf(nameOrBytes,"JU.BArray")) {
 bytes = (nameOrBytes).data;
+} else if (JU.AU.isAB(nameOrBytes)) {
+bytes = nameOrBytes;
 } else if (echoName == null || (typeof(nameOrBytes)=='string')) {
 var names = this.getClassifiedName(nameOrBytes, true);
 nameOrError = (names == null ? "cannot read file name: " + nameOrBytes : JV.FileManager.fixDOSName(names[0]));
@@ -753,6 +756,10 @@ if (line.indexOf(".obj") >= 0) return "Obj";
 if (line.indexOf("MSMS") >= 0) return "Msms";
 if (line.indexOf("Menu") >= 0) return "MENU";
 break;
+case 60:
+if (line.startsWith("<?xml") && line.indexOf("<jvxl ") > 0) return "JvxlXml";
+if (line.indexOf("<efvet ") >= 0) return "Efvet";
+break;
 case 38:
 if (line.indexOf("&plot") == 0) return "Jaguar";
 break;
@@ -765,13 +772,11 @@ if (line.indexOf("Here is your gzipped map") >= 0) return "UPPSALA" + line;
 if (line.startsWith("data_SERVER")) return "CifDensity";
 if (line.startsWith("4MESHC")) return "Pmesh4";
 if (line.indexOf("! nspins") >= 0) return "CastepDensity";
-if (line.indexOf("<jvxl") >= 0 && line.indexOf("<?xml") >= 0) return "JvxlXml";
 if (line.indexOf("#JVXL+") >= 0) return "Jvxl+";
 if (line.indexOf("#JVXL") >= 0) return "Jvxl";
 if (line.indexOf("#JmolPmesh") >= 0) return "Pmesh";
 if (line.indexOf("#obj") >= 0) return "Obj";
 if (line.indexOf("#pmesh") >= 0) return "Obj";
-if (line.indexOf("<efvet ") >= 0) return "Efvet";
 if (line.indexOf("usemtl") >= 0) return "Obj";
 if (line.indexOf("# object with") == 0) return "Nff";
 if (line.indexOf("PRIMVEC") >= 0 || line.indexOf("BEGIN_DATAGRID_3D") >= 0 || line.indexOf("BEGIN_BANDGRID_3D") >= 0) return "Xsf";
@@ -1031,7 +1036,7 @@ return;
 }if (fname.endsWith(".pse")) {
 cmd = (isCached ? "" : "zap;") + "load SYNC " + JU.PT.esc(fname) + (this.vwr.isApplet ? "" : " filter 'DORESIZE'");
 return;
-}if (fname.endsWith("jvxl")) {
+}if (fname.endsWith(".jvxl")) {
 cmd = "isosurface ";
 } else if (!fname.toLowerCase().endsWith(".spt")) {
 if (type == null) type = this.getDragDropFileTypeName(fname);
@@ -1086,7 +1091,7 @@ fname += type.substring(pt, type.length - 2);
 type = "";
 }fname = type + fname;
 }cmd = this.vwr.g.defaultDropScript;
-if (cmd.equals("zap; load SYNC \"%FILE\";if (%ALLOWCARTOONS && _loadScript == \'\' && defaultLoadScript == \'\' && _filetype == \'Pdb\') {if ({(protein or nucleic)&*/1.1} && {*/1.1}[1].groupindex != {*/1.1}[0].groupindex){select protein or nucleic;cartoons only;}if ({visible && cartoons > 0}){color structure}else{wireframe -0.1};if (!{visible}){spacefill 23%};select *}")) {
+if (cmd.equals("zap; load SYNC \"%FILE\";if (%ALLOWCARTOONS && _loadScript == \'\' && defaultLoadScript == \'\' && _filetype == \'Pdb\') {if ({(protein or nucleic)&*/1.1} && {*/1.1}[1].groupindex != {*/1.1}[0].groupindex){select protein or nucleic;cartoons only;}if ({visible && cartoons > 0}){color structure}else{wireframe -0.1};if (!{visible}){select !visible;wireframe 0.15;color none;select !visible;spacefill 23%};select *}")) {
 if (!JV.JC.isLikelyPDB(type) || !pdbCartoons) {
 var pt = cmd.indexOf("if (");
 if (pt >= 0) {
@@ -1180,4 +1185,4 @@ return this.vwr.getModelAdapter().getFileTypeName(br);
 c$.SIMULATION_PROTOCOL = "http://SIMULATION/";
 c$.scriptFilePrefixes =  Clazz.newArray(-1, ["/*file*/\"", "FILE0=\"", "FILE1=\""]);
 });
-;//5.0.1-v7 Fri Jun 12 11:18:14 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

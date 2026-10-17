@@ -1423,7 +1423,7 @@ function(vtrans){
 vtrans.x = JU.PT.approx(vtrans.x, 12);
 vtrans.y = JU.PT.approx(vtrans.y, 12);
 vtrans.z = JU.PT.approx(vtrans.z, 12);
-}, "JU.V3");
+}, "JU.T3");
 Clazz.defineMethod(c$, "getCode", 
 function(){
 if (this.opAxisCode != null) {
@@ -1659,4 +1659,4 @@ c$.C3codes =  Clazz.newIntArray(-1, [0x031112, 0x121301, 0x130112, 0x021311, 0x1
 c$.xneg = null;
 c$.opPlanes = null;
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026

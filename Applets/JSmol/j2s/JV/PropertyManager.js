@@ -1270,7 +1270,7 @@ if (this.vwr.ms.ac == 0 || bs.nextSetBit(0) < 0) return "";
 return this.getModel("PDB", bs,  Clazz.newArray(-1, [new Boolean(isPQR), new Boolean(doTransform), new Boolean(allTrajectories)]), out);
 }, "JU.BS,JU.OC,~B,~B,~B");
 Clazz.overrideMethod(c$, "getPdbData", 
-function(modelIndex, type, bsSelected, parameters, out, addStructure){
+function(modelIndex, tok, type, bsSelected, parameters, out, addStructure){
 if (this.vwr.ms.isJmolDataFrame(modelIndex)) modelIndex = this.vwr.ms.getJmolDataSourceFrame(modelIndex);
 if (modelIndex < 0) return "";
 var model = this.vwr.ms.am[modelIndex];
@@ -1278,39 +1278,95 @@ var isPDB = model.isBioModel;
 if (parameters == null && !isPDB) return null;
 if (out == null) out = this.vwr.getOutputChannel(null, null);
 var pdbCONECT =  new JU.SB();
-var isDraw = (type.indexOf("draw") >= 0);
-var isSpin = (type.indexOf("spin") >= 0);
+var isDataOnly = (type.indexOf("reciprocalLattice") >= 0);
 var bsAtoms = null;
+var atoms = null;
 var bsWritten =  new JU.BS();
 var ctype = '\u0000';
 this.vwr.ms.getLabeler();
 var tokens = JM.LabelToken.compile(this.vwr, "ATOM  %-6i%4a%1A%3.-3n %1c%4R%1E   ", '\0', null);
 if (parameters == null) {
 ctype = (type.length > 11 && type.indexOf("quaternion ") >= 0 ? type.charAt(11) : 'R');
-(model).getPdbData(type, ctype, isDraw, bsSelected, out, tokens, pdbCONECT, bsWritten);
+(model).getPdbData(type, ctype, tok == 135176, bsSelected, out, tokens, pdbCONECT, bsWritten);
 bsAtoms = this.vwr.getModelUndeletedAtomsBitSet(modelIndex);
 } else {
-bsAtoms = parameters[0];
 var dataX = parameters[1];
 var dataY = parameters[2];
 var dataZ = parameters[3];
+var data3 = parameters[11];
 var haveY = (dataY != null);
 var haveZ = (dataZ != null);
+var factors = parameters[6];
+var format = parameters[8];
+var isPDBFormat = (factors != null && format == null);
+var strExtra = "";
+var atomLast = null;
+var ptTemp =  new JU.P3();
+if (!isDataOnly) {
+atoms = this.vwr.ms.at;
+bsAtoms = parameters[0];
+}if (isPDBFormat) {
+this.addPDBHeader(tok, type, modelIndex, bsAtoms, factors, parameters, out);
+} else {
+if (format == null) {
+if (isDataOnly) {
+format = "%-10s %-13.5f %-13.5f %-13.5f";
+} else {
+format = "%-5i %-10s %-13.5f " + (haveZ ? "%-13.5f %-13.5f" : haveY ? "%-13.5f" : "");
+}}format += "\n";
+}if (isDataOnly) {
+var n = dataX.length;
+out.append(n + "\n\n");
+for (var i = 0; i < n; i++) {
+out.append(JU.PT.sprintf(format, "sF",  Clazz.newArray(-1, ["Xx",  Clazz.newFloatArray(-1, [dataX[i], dataY[i], dataZ[i]])])));
+}
+return out.toString();
+}for (var i = bsAtoms.nextSetBit(0), n = 0; i >= 0; i = bsAtoms.nextSetBit(i + 1), n++) {
+var x = dataX[n];
+var y = (haveY ? dataY[n] : 0);
+var z = (haveZ ? dataZ[n] : 0);
+var spin = (tok == 1095241729 ? data3[n] : 0);
+if (Float.isNaN(x) || Float.isNaN(y) || Float.isNaN(z)) continue;
+var a = atoms[i];
+if (isPDBFormat) {
+var line = JM.LabelToken.formatLabelAtomArray(this.vwr, a, tokens, '\0', null, ptTemp);
+while (line.charAt(16) != ' ') {
+var pt = line.lastIndexOf(' ', 16);
+if (pt < 0) break;
+line = line.substring(0, pt - 1) + line.substring(pt);
+}
+out.append(line);
+if (isPDB) bsWritten.set(i);
+out.append(JU.PT.sprintf("%-8.2f%-8.2f%-10.2f    %6.3f          %-2s    %s\n", "ssF",  Clazz.newArray(-1, [a.getElementSymbolIso(false).toUpperCase(), strExtra,  Clazz.newFloatArray(-1, [x, y, z, spin])])));
+if (isPDB && atomLast != null && atomLast.group.getBioPolymerIndexInModel() == a.group.getBioPolymerIndexInModel()) pdbCONECT.append("CONECT").append(JU.PT.formatStringI("%5i", "i", atomLast.getAtomNumber())).append(JU.PT.formatStringI("%5i", "i", a.getAtomNumber())).appendC('\n');
+} else {
+this.writeDataFormat(format, a.getAtomNumber(), a.getAtomName(), x, (haveY ? y : NaN), (haveZ ? z : NaN), out);
+}atomLast = a;
+}
+}out.append(pdbCONECT.toString());
+if (tok == 135176) return out.toString();
+bsSelected.and(bsAtoms);
+if (isPDB && addStructure) out.append("\n\n" + this.vwr.ms.getProteinStructureState(bsWritten, ctype == 'R' ? 4138 : 1073742086));
+return out.toString();
+}, "~N,~N,~S,JU.BS,~A,JU.OC,~B");
+Clazz.defineMethod(c$, "writeDataFormat", 
+function(format, atomNumber, atomName, x, y, z, out){
+var d = (Double.isNaN(z) ?  Clazz.newDoubleArray(-1, [x, y, z]) : Double.isNaN(y) ?  Clazz.newDoubleArray(-1, [x, y]) :  Clazz.newDoubleArray(-1, [x]));
+out.append(JU.PT.sprintf(format, "isF",  Clazz.newArray(-1, [Integer.$valueOf(atomNumber), atomName, d])));
+}, "~S,~N,~S,~N,~N,~N,JU.OC");
+Clazz.defineMethod(c$, "addPDBHeader", 
+function(tok, type, modelIndex, bsAtoms, factors, parameters, out){
 var minXYZ = parameters[4];
 var maxXYZ = parameters[5];
-var factors = parameters[6];
 var center = parameters[7];
-var format = parameters[8];
 var properties = parameters[9];
-var pdbFactor = (parameters[10]).floatValue();
-var isPDBFormat = (factors != null && format == null);
-var atoms = this.vwr.ms.at;
-if (isPDBFormat) {
+var pdbFactor = (parameters[10]).doubleValue();
 out.append("REMARK   6 Jmol PDB-encoded data: ").append(type).append("; for model " + modelIndex + "; Jmol ").append(JV.Viewer.getJmolVersion()).append("; ").append(this.vwr.apiPlatform.getDateFormat(null)).append("\n");
 out.append("REMARK   6 Jmol data").append(" min = ").append(JU.Escape.eP(minXYZ)).append(" max = ").append(JU.Escape.eP(maxXYZ)).append(" unScaledXyz = xyz * ").append(JU.Escape.eP(factors)).append(" + ").append(JU.Escape.eP(center));
 if (pdbFactor != 1) out.append("pdbfactor = " + pdbFactor);
 out.append(";\n");
 var atomNames = null;
+var atoms = this.vwr.ms.at;
 for (var i = bsAtoms.nextSetBit(0); i >= 0; i = bsAtoms.nextSetBit(i + 1)) {
 var name = "" + atoms[i].getAtomName();
 if (atomNames != null || name.length > 4) {
@@ -1332,47 +1388,13 @@ continue;
 }resNames += " " + name;
 }}
 if (resNames != null) out.append("REMARK   6 Jmol residue names").append(resNames).append("\n");
-if (isSpin) {
+if (tok == 1095241729) {
+var mat = this.vwr.ms.getModelAuxiliaryInfo(modelIndex).get("spinRotationMatrixApplied");
+if (mat != null) out.append("REMARK   6 Jmol spin matrix applied ").append(mat.toJSON()).append("\n");
 } else {
 for (var i = 0; i < properties.length; i++) if (properties[i] != null) out.append("REMARK   6 Jmol property ").append(properties[i]).append(";\n");
 
-}}var strExtra = "";
-var atomLast = null;
-var ptTemp =  new JU.P3();
-if (!isPDBFormat) {
-if (format == null) format = "%-5i %-10s %-13.5f " + (haveZ ? "%-13.5f %-13.5f" : haveY ? "%-13.5f" : "");
-format += "\n";
-}for (var i = bsAtoms.nextSetBit(0), n = 0; i >= 0; i = bsAtoms.nextSetBit(i + 1), n++) {
-var x = dataX[n];
-var y = (haveY ? dataY[n] : 0);
-var z = (haveZ ? dataZ[n] : 0);
-if (Float.isNaN(x) || Float.isNaN(y) || Float.isNaN(z)) continue;
-var a = atoms[i];
-if (isPDBFormat) {
-var line = JM.LabelToken.formatLabelAtomArray(this.vwr, a, tokens, '\0', null, ptTemp);
-while (line.charAt(16) != ' ') {
-var pt = line.lastIndexOf(' ', 16);
-if (pt < 0) break;
-line = line.substring(0, pt - 1) + line.substring(pt);
-}
-out.append(line);
-if (isPDB) bsWritten.set(i);
-out.append(JU.PT.sprintf("%-8.2f%-8.2f%-10.2f    %6.3f          %-2s    %s\n", "ssF",  Clazz.newArray(-1, [a.getElementSymbolIso(false).toUpperCase(), strExtra,  Clazz.newFloatArray(-1, [x, y, z, 0])])));
-if (isPDB && atomLast != null && atomLast.group.getBioPolymerIndexInModel() == a.group.getBioPolymerIndexInModel()) pdbCONECT.append("CONECT").append(JU.PT.formatStringI("%5i", "i", atomLast.getAtomNumber())).append(JU.PT.formatStringI("%5i", "i", a.getAtomNumber())).appendC('\n');
-} else if (haveZ) {
-out.append(JU.PT.sprintf(format, "isF",  Clazz.newArray(-1, [Integer.$valueOf(a.getAtomNumber()), a.getAtomName(),  Clazz.newFloatArray(-1, [x, y, z])])));
-} else if (haveY) {
-out.append(JU.PT.sprintf(format, "isF",  Clazz.newArray(-1, [Integer.$valueOf(a.getAtomNumber()), a.getAtomName(),  Clazz.newFloatArray(-1, [x, y])])));
-} else {
-out.append(JU.PT.sprintf(format, "isF",  Clazz.newArray(-1, [Integer.$valueOf(a.getAtomNumber()), a.getAtomName(),  Clazz.newFloatArray(-1, [x])])));
-}atomLast = a;
-}
-}out.append(pdbCONECT.toString());
-if (isDraw) return out.toString();
-bsSelected.and(bsAtoms);
-if (isPDB && addStructure) out.append("\n\n" + this.vwr.ms.getProteinStructureState(bsWritten, ctype == 'R' ? 4138 : 1073742086));
-return out.toString();
-}, "~N,~S,JU.BS,~A,JU.OC,~B");
+}}, "~N,~S,~N,JU.BS,JU.P3,~A,JU.OC");
 Clazz.overrideMethod(c$, "getModelCml", 
 function(bs, atomsMax, addBonds, doTransform, allTrajectories){
 return this.getModel("CML", bs,  Clazz.newArray(-1, [new Integer(atomsMax), new Boolean(addBonds), new Boolean(doTransform), new Boolean(allTrajectories)]), null);
@@ -1436,4 +1458,4 @@ return mol.toString();
 c$.propertyTypes =  Clazz.newArray(-1, ["appletInfo", "", "", "fileName", "", "", "fileHeader", "", "", "fileContents", "<pathname>", "", "fileContents", "", "", "animationInfo", "", "", "modelInfo", "<atom selection>", "{*}", "ligandInfo", "<atom selection>", "{*}", "shapeInfo", "", "", "measurementInfo", "", "", "centerInfo", "", "", "orientationInfo", "", "", "transformInfo", "", "", "", "", "", "atomInfo", "<atom selection>", "(visible)", "bondInfo", "<atom selection>", "(visible)", "chainInfo", "<atom selection>", "(visible)", "polymerInfo", "<atom selection>", "(visible)", "moleculeInfo", "<atom selection>", "(visible)", "stateInfo", "<state type>", "all", "extractModel", "<atom selection>", "(visible)", "jmolStatus", "statusNameList", "", "jmolViewer", "", "", "messageQueue", "", "", "auxiliaryInfo", "<atom selection>", "{*}", "boundBoxInfo", "", "", "dataInfo", "<data type>", "types", "image", "<width=www,height=hhh>", "", "evaluate", "<expression>", "", "menu", "<type>", "current", "minimizationInfo", "", "", "pointGroupInfo", "<atom selection>", "(visible)", "fileInfo", "<type>", "", "errorMessage", "", "", "mouseInfo", "", "", "isosurfaceInfo", "", "", "isosurfaceData", "", "", "consoleText", "", "", "JSpecView", "<key>", "", "scriptQueueInfo", "", "", "nmrInfo", "<elementSymbol> or 'all' or 'shifts'", "all", "variableInfo", "<name>", "all", "domainInfo", "<atom selection>", "{visible}", "validationInfo", "<atom selection>", "{visible}", "service", "<hashTable>", "", "CIFInfo", "<filename>", "", "modelkitInfo", "<key>", "data", "unitcellInfo", "", ""]);
 c$.readableTypes =  Clazz.newArray(-1, ["", "stateinfo", "extractmodel", "filecontents", "fileheader", "image", "menu", "minimizationInfo"]);
 });
-;//5.0.1-v7 Fri Jun 12 11:30:14 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

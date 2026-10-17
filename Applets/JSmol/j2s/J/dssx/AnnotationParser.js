@@ -1,5 +1,5 @@
 Clazz.declarePackage("J.dssx");
-Clazz.load(["J.api.JmolAnnotationParser"], "J.dssx.AnnotationParser", ["java.util.Hashtable", "JU.AU", "$.BS", "$.Lst", "$.PT", "$.SB", "JM.Group", "JM.BioResolver", "JS.SV", "JU.BSUtil", "$.Logger"], function(){
+Clazz.load(["J.api.JmolAnnotationParser"], "J.dssx.AnnotationParser", ["java.util.Hashtable", "JU.AU", "$.BS", "$.Lst", "$.PT", "$.SB", "JM.BioResolver", "JS.SV", "JU.BSUtil", "$.Logger"], function(){
 var c$ = Clazz.declareType(J.dssx, "AnnotationParser", null, J.api.JmolAnnotationParser);
 /*LV!1824 unnec constructor*/Clazz.defineMethod(c$, "getAnnotationKVPairs", 
 function(a, match, dotPath, sb, pre, showDetail, isMappingOnly, type){
@@ -359,36 +359,7 @@ return sb.toString();
 }, "JV.Viewer,JS.SV,~S,~N,~N");
 Clazz.defineMethod(c$, "getAttachedAtomForPDBH", 
 function(group3, name){
-if (name.charAt(0) == 'H') {
-if (J.dssx.AnnotationParser.pdbAtomForH == null) {
-J.dssx.AnnotationParser.pdbAtomForH =  new java.util.Hashtable();
-this.assignPDBH("", "N H H1 H2 H3 CB HB2 HB3 CD HD2 HD3 CG HG2 HG3 C2' H2'' H2' C5' H5'' H5' OXT HXT");
-for (var i = JM.BioResolver.pdbBondInfo.length; --i >= 1; ) {
-this.assignPDBH(JM.Group.group3Names[i], JM.BioResolver.pdbBondInfo[i]);
-}
-}var a = J.dssx.AnnotationParser.pdbAtomForH.get(name);
-if (a == null) a = J.dssx.AnnotationParser.pdbAtomForH.get(group3 + name);
-if (a != null) return a;
-}return name;
-}, "~S,~S");
-Clazz.defineMethod(c$, "assignPDBH", 
-function(group3, sNames){
-var names = JU.PT.getTokens(JU.PT.rep(sNames, "@", " "));
-var a = null;
-for (var i = 0, n = names.length; i < n; i++) {
-var s = names[i];
-if (s.charAt(0) != 'H') {
-a = s;
-continue;
-}s = group3 + s;
-if (s.indexOf("?") >= 0) {
-s = s.substring(0, s.length - 1);
-J.dssx.AnnotationParser.pdbAtomForH.put(s + "1", a);
-J.dssx.AnnotationParser.pdbAtomForH.put(s + "2", a);
-J.dssx.AnnotationParser.pdbAtomForH.put(s + "3", a);
-} else {
-J.dssx.AnnotationParser.pdbAtomForH.put(s, a);
-}}
+return (name.charAt(0) == 'H' ? JM.BioResolver.getPDBHAtomForH(group3, name) : name);
 }, "~S,~S");
 Clazz.overrideMethod(c$, "fixAtoms", 
 function(modelIndex, dbObj, bsAddedMask, type, margin){
@@ -424,6 +395,5 @@ return null;
 Clazz.overrideMethod(c$, "getAtomicDSSRData", 
 function(ms, modelIndex, dataList){
 }, "JM.ModelSet,~N,JM.ModelSet.DataList");
-c$.pdbAtomForH = null;
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Mon Sep 28 08:46:51 CDT 2026

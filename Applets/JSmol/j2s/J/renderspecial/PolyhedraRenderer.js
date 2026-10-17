@@ -132,4 +132,4 @@ if ((edgeMask & 2) == 2) this.g3d.fillCylinderBits(3, d, b, c);
 if ((edgeMask & 4) == 4) this.g3d.fillCylinderBits(3, d, a, c);
 }}, "~N,JU.P3,JU.P3,JU.P3,~N");
 });
-;//5.0.1-v7 Fri Jun 12 11:30:14 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026

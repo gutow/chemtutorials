@@ -45,5 +45,9 @@ for (var i = this.firstAtomIndex; i <= this.lastAtomIndex; i++) if (this.getCros
 
 return false;
 });
+Clazz.overrideMethod(c$, "getGroupMenuKey", 
+function(){
+return "c>";
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+});
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

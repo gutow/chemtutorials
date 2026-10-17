@@ -20,7 +20,7 @@ this.isPyMOLsession = false;
 this.doMinimize = false;
 this.doAddPDBHydrogens = false;
 this.fileHeader = null;
-this.jbr = null;
+this.bml = null;
 this.groups = null;
 this.groupCount = 0;
 this.modulationTUV = null;
@@ -83,11 +83,10 @@ var info = adapter.getAtomSetCollectionAuxiliaryInfo(asc);
 info.put("loadScript", loadScript);
 this.initializeInfo(adapter.getFileTypeName(asc).toLowerCase().intern(), info);
 this.createModelSet(adapter, asc, bsNew);
+this.bml = null;
 if (info.get("lowPrecision") != null) {
 vwr.setBooleanPropertyTok("doublePrecision", 603979831, false);
-}if (this.jbr != null) this.jbr.setLoader(null);
-this.jbr = null;
-}, "JV.Viewer,~S,JU.SB,~O,JM.ModelSet,JU.BS");
+}}, "JV.Viewer,~S,JU.SB,~O,JM.ModelSet,JU.BS");
 Clazz.defineMethod(c$, "initializeInfo", 
 function(name, info){
 this.ms.g3d = this.vwr.gdata;
@@ -96,17 +95,17 @@ this.ms.isXYZ = (name === "xyz");
 this.ms.msInfo = info;
 this.ms.modelSetProperties = this.ms.getInfoM("properties");
 this.ms.haveBioModels = this.ms.getMSInfoB(JV.JC.getBoolName(4));
-this.isMutate = this.ms.getMSInfoB("isMutate");
 if (this.ms.haveBioModels) {
-this.jbr = this.vwr.getJBR().setLoader(this);
-this.jbr.carbohydrates = info.get("carbohydrates");
-}this.jmolData = (this.adapterModelCount == 0 ? this.ms.getInfoM("jmolData") : null);
+this.bml = this.vwr.getJBR().getBioModelLoader(this);
+this.bml.addMMCifCarbohydrates(info.get("carbohydrates"));
+}this.isMutate = this.ms.getMSInfoB("isMutate");
+this.jmolData = (this.adapterModelCount == 0 ? this.ms.getInfoM("jmolData") : null);
 this.fileHeader = this.ms.getInfoM("fileHeader");
 var steps = this.ms.getInfoM("trajectorySteps");
 this.isTrajectory = (steps != null);
 if (this.isTrajectory) this.ms.trajectory = this.newTrajectory(this.ms, steps);
 this.isPyMOLsession = this.ms.getMSInfoB("isPyMOL");
-this.doAddPDBHydrogens = (this.jbr != null && !this.isTrajectory && !this.isPyMOLsession && !this.ms.getMSInfoB("pdbNoHydrogens") && (this.ms.getMSInfoB("pdbAddHydrogens") || this.vwr.getBoolean(603979894)));
+this.doAddPDBHydrogens = (this.bml != null && !this.isTrajectory && !this.isPyMOLsession && !this.ms.getMSInfoB("pdbNoHydrogens") && (this.ms.getMSInfoB("pdbAddHydrogens") || this.vwr.getBoolean(603979894)));
 if (info != null) {
 info.remove("pdbNoHydrogens");
 info.remove("pdbAddHydrogens");
@@ -207,10 +206,12 @@ this.initializeBonding();
 }this.finalizeGroupBuild();
 if (this.is2D && this.doMinimize) {
 this.setupMinimization();
-}if (this.doAddPDBHydrogens) this.jbr.finalizeHydrogens();
-if (adapter != null) {
+}if (this.doAddPDBHydrogens) {
+var bsAtoms = JU.BSUtil.newBitSet2(this.baseAtomIndex, this.ms.ac);
+this.bml.finalizeHydrogens(this, bsAtoms);
+}if (adapter != null) {
 this.ms.calculatePolymers(this.groups, this.groupCount, this.baseGroupIndex, null);
-if (this.jbr != null) this.jbr.iterateOverAllNewStructures(adapter, asc);
+if (this.bml != null) this.bml.iterateOverAllNewStructures(this, adapter, asc);
 }this.setDefaultRendering(this.vwr.getInt(553648170));
 var rd = this.vwr.rd;
 var ac = this.ms.ac;
@@ -286,7 +287,7 @@ var value = entry.getValue();
 var bs = this.ms.getModelAtomBitSetIncludingDeleted(i, true);
 if (this.doAddPDBHydrogens) {
 var isGroup = (groupList != null && JU.PT.isOneOf(key, groupList));
-value = this.jbr.fixPropertyValue(bs, value, isGroup);
+value = this.bml.fixPropertyValue(bs, value, isGroup);
 }key = "property_" + key.toLowerCase();
 JU.Logger.info("creating " + key + " for model " + this.ms.getModelName(i));
 this.vwr.setData(key,  Clazz.newArray(-1, [key, value, bs, Integer.$valueOf(-1), Boolean.FALSE, entry]), this.ms.ac, 0, 0, 2147483647, 0);
@@ -317,7 +318,7 @@ this.ms.ac = 0;
 this.ms.bondCount = 0;
 this.ms.at =  new Array(nAtoms);
 this.ms.bo =  new Array(250 + nAtoms);
-}if (this.doAddPDBHydrogens) this.jbr.initializeHydrogenAddition();
+}if (this.doAddPDBHydrogens) this.bml.initializeHydrogenAddition();
 if (trajectoryCount > 1) this.ms.mc += trajectoryCount - 1;
 this.ms.am = JU.AU.arrayCopyObject(this.ms.am, this.ms.mc);
 this.ms.modelFileNumbers = JU.AU.arrayCopyI(this.ms.modelFileNumbers, this.ms.mc);
@@ -366,8 +367,9 @@ this.vwr.fm.setFileType(ftype);
 }if (modelName == null) {
 if (this.jmolData != null) {
 modelName = this.jmolData.get("header");
+if (modelName != null) {
 modelName = (modelName.indexOf(";") > 2 ? modelName.substring(modelName.indexOf(":") + 2, modelName.indexOf(";")) : null);
-}if (modelName == null) modelName = (this.appendNew ? "" + (modelNumber % 1000000) : "");
+}}if (modelName == null) modelName = (this.appendNew ? "" + (modelNumber % 1000000) : "");
 }this.setModelNameNumberProperties(ipt, iTrajectory, modelName, modelNumber, modelProperties, modelAuxiliaryInfo, this.jmolData);
 }
 var m = this.ms.am[this.appendToModelIndex == null ? this.baseModelIndex : this.ms.mc - 1];
@@ -403,10 +405,10 @@ Clazz.defineMethod(c$, "setModelNameNumberProperties",
 function(modelIndex, trajectoryBaseIndex, modelName, modelNumber, modelProperties, modelAuxiliaryInfo, jmolData){
 if (this.appendNew) {
 var modelIsPDB = (modelAuxiliaryInfo != null && Boolean.TRUE === modelAuxiliaryInfo.get(JV.JC.getBoolName(4)));
-this.ms.am[modelIndex] = (modelIsPDB ? this.jbr.getBioModel(modelIndex, trajectoryBaseIndex, jmolData, modelProperties, modelAuxiliaryInfo) :  new JM.Model().set(this.ms, modelIndex, trajectoryBaseIndex, jmolData, modelProperties, modelAuxiliaryInfo));
+this.ms.am[modelIndex] = (modelIsPDB ? this.bml.getBioModel(modelIndex, trajectoryBaseIndex, jmolData, modelProperties, modelAuxiliaryInfo) :  new JM.Model().set(this.ms, modelIndex, trajectoryBaseIndex, jmolData, modelProperties, modelAuxiliaryInfo));
 this.ms.modelNumbers[modelIndex] = modelNumber;
 this.ms.modelNames[modelIndex] = modelName;
-if (modelIsPDB) this.jbr.setGroupLists(modelIndex);
+if (modelIsPDB) this.setGroupLists(modelIndex);
 } else {
 var atomInfo = modelAuxiliaryInfo.get("PDB_CONECT_firstAtom_count_max");
 if (atomInfo != null) this.ms.setInfo(modelIndex, "PDB_CONECT_firstAtom_count_max", atomInfo);
@@ -426,6 +428,15 @@ models[modelIndex].insertionCount = (codes == null ? 0 : codes.length);
 var isModelKit = (this.ms.modelSetName != null && this.ms.modelSetName.startsWith("Jmol Model Kit") || modelName.startsWith("Jmol Model Kit") || "Jme".equals(this.ms.getInfo(modelIndex, "fileType")) && this.is2D);
 models[modelIndex].isModelKit = isModelKit;
 }, "~N,~N,~S,~N,java.util.Properties,java.util.Map,java.util.Map");
+Clazz.defineMethod(c$, "setGroupLists", 
+function(ipt){
+var group3Count = this.bml.getGroup3Count();
+this.group3Lists[ipt + 1] = JM.Group.standardGroupList;
+this.group3Counts[ipt + 1] =  Clazz.newIntArray (group3Count + 10, 0);
+if (this.group3Lists[0] == null) {
+this.group3Lists[0] = JM.Group.standardGroupList;
+this.group3Counts[0] =  Clazz.newIntArray (group3Count + 10, 0);
+}}, "~N");
 Clazz.defineMethod(c$, "finalizeModels", 
 function(baseModelCount){
 var modelCount = this.ms.mc;
@@ -511,19 +522,19 @@ this.model.isOrderly = (this.appendToModelIndex == null);
 isPdbThisModel = this.model.isBioModel;
 iLast = modelIndex;
 addH = isPdbThisModel && this.doAddPDBHydrogens;
-if (this.jbr != null) this.jbr.setHaveHsAlready(false);
+if (this.bml != null) this.bml.setHaveHsAlready(false);
 }var group3 = iterAtom.getGroup3();
 var chainID = iterAtom.getChainID();
 this.checkNewGroup(adapter, chainID, group3, iterAtom.getSequenceNumber(), iterAtom.getInsertionCode(), addH, isLegacyHAddition);
 var isotope = iterAtom.getElementNumber();
-if (addH && JU.Elements.getElementNumber(isotope) == 1) this.jbr.setHaveHsAlready(true);
+if (addH && JU.Elements.getElementNumber(isotope) == 1) this.bml.setHaveHsAlready(true);
 var name = iterAtom.getAtomName();
 var charge = (addH ? this.getPdbCharge(group3, name) : iterAtom.getFormalCharge());
 var atom = this.addAtom(isPdbThisModel, iterAtom, name, isotope, siteBase, charge, group3);
 if (haveBonds) this.htAtomMap.put(iterAtom.getUniqueID(), atom);
 }
 if (this.groupCount > 0 && addH) {
-this.jbr.addImplicitHydrogenAtoms(adapter, this.groupCount - 1, this.isNewChain && !isLegacyHAddition ? 1 : 0);
+this.bml.addImplicitHydrogenAtoms(this, adapter, this.groupCount - 1, this.isNewChain && !isLegacyHAddition ? 1 : 0);
 }iLast = -1;
 var vdwtypeLast = null;
 var atoms = this.ms.at;
@@ -555,7 +566,7 @@ Clazz.defineMethod(c$, "addJmolDataProperties",
 function(m, jmolDataProperties){
 if (jmolDataProperties == null) return;
 var props = jmolDataProperties.get("properties");
-if (props.containsKey("spinZ")) return;
+if (props == null || props.containsKey("spinZ")) return;
 var bs = m.bsAtoms;
 var nAtoms = bs.cardinality();
 for (var e, $e = props.entrySet().iterator (); $e.hasNext()&& ((e = $e.next ()) || true);) {
@@ -580,7 +591,7 @@ this.vwr.setData(key,  Clazz.newArray(-1, [key, data, bs, Integer.$valueOf(1)]),
 }, "JM.Model,java.util.Map");
 Clazz.defineMethod(c$, "getPdbCharge", 
 function(group3, name){
-return (group3.equals("ARG") && name.equals("NH1") || group3.equals("LYS") && name.equals("NZ") || group3.equals("HIS") && name.equals("ND1") ? 1 : 0);
+return (group3.equals("ARG") && name.equals("NH2") || group3.equals("LYS") && name.equals("NZ") || group3.equals("HIS") && name.equals("ND1") ? 1 : 0);
 }, "~S,~S");
 Clazz.defineMethod(c$, "addAtom", 
 function(isPDB, iterAtom, atomName, atomicAndIsotopeNumber, siteBase, formalCharge, group3){
@@ -626,8 +637,8 @@ this.isNewChain = true;
 }var group3i = (group3 == null ? null : group3.intern());
 if (groupSequenceNumber != this.currentGroupSequenceNumber || groupInsertionCode != this.currentGroupInsertionCode || group3i !== this.currentGroup3) {
 if (this.groupCount > 0 && addH) {
-this.jbr.addImplicitHydrogenAtoms(adapter, this.groupCount - 1, this.isNewChain && !isLegacyHAddition ? 1 : 0);
-this.jbr.setHaveHsAlready(false);
+this.bml.addImplicitHydrogenAtoms(this, adapter, this.groupCount - 1, this.isNewChain && !isLegacyHAddition ? 1 : 0);
+this.bml.setHaveHsAlready(false);
 }this.currentGroupSequenceNumber = groupSequenceNumber;
 this.currentGroupInsertionCode = groupInsertionCode;
 this.currentGroup3 = group3i;
@@ -766,20 +777,21 @@ var doAutoBond = this.vwr.getBoolean(603979798);
 var forceAutoBond = this.vwr.getBoolean(603979848);
 var bs = null;
 var autoBonding = false;
-if (!this.noAutoBond) for (var i = this.baseModelIndex; i < modelCount; i++) {
+if (!this.noAutoBond) {
+for (var i = this.baseModelIndex; i < modelCount; i++) {
 modelAtomCount = models[i].bsAtoms.cardinality();
 var modelBondCount = this.ms.getInfoI(i, "initialBondCount");
 var modelIsPDB = models[i].isBioModel;
 if (modelBondCount < 0) {
 modelBondCount = this.ms.bondCount;
-}var doBond = (forceAutoBond || doAutoBond && (modelBondCount == 0 || modelIsPDB && this.jmolData == null && (this.ms.getMSInfoB("havePDBHeaderName") || modelBondCount < Clazz.doubleToInt(modelAtomCount / 2)) || this.ms.getInfoB(i, "hasSymmetry") && !symmetryAlreadyAppliedToBonds && !this.ms.getInfoB(i, "hasBonds")));
+}var doBond = (forceAutoBond || doAutoBond && (modelBondCount == 0 || (modelIsPDB && this.jmolData == null && (modelBondCount < Clazz.doubleToInt(modelAtomCount / 2) || this.ms.getMSInfoB("havePDBHeaderName") || this.ms.getMSInfoB("mmCIFallBonds"))) || (!symmetryAlreadyAppliedToBonds && this.ms.getInfoB(i, "hasSymmetry") && !this.ms.getInfoB(i, "CIFhasBonds"))));
 if (!doBond) continue;
 autoBonding = true;
 if (this.merging || modelCount > 1) {
 if (bs == null) bs = JU.BS.newN(this.ms.ac);
 if (i == this.baseModelIndex || !this.isTrajectory) bs.or(models[i].bsAtoms);
 }}
-if (this.modulationOn) this.ms.setModulation(null, true, this.modulationTUV, false);
+}if (this.modulationOn) this.ms.setModulation(null, true, this.modulationTUV, false);
 if (autoBonding) {
 this.ms.autoBondBs4(bs, bs, bsExclude, null, this.ms.defaultCovalentMad, this.vwr.getBoolean(603979872), null);
 JU.Logger.info("ModelSet: autobonding; use  autobond=false  to not generate bonds automatically");
@@ -802,15 +814,12 @@ for (var i = 0; i < this.group3Counts.length; i++) if (this.group3Counts[i] == n
 Clazz.defineMethod(c$, "distinguishAndPropagateGroup", 
 function(groupIndex, chain, group3, seqcode, firstAtomIndex, lastAtomIndex){
 if (lastAtomIndex < firstAtomIndex) throw  new NullPointerException();
-var group = (group3 == null || this.jbr == null ? null : this.jbr.distinguishAndPropagateGroup(chain, group3, seqcode, firstAtomIndex, lastAtomIndex, this.specialAtomIndexes, this.ms.at));
-var key;
+var group = (group3 == null || this.bml == null ? null : this.bml.distinguishAndPropagateGroup(chain, group3, seqcode, firstAtomIndex, lastAtomIndex, this.specialAtomIndexes, this.ms.at));
 if (group == null) {
 group =  new JM.Group().setGroup(chain, group3, seqcode, firstAtomIndex, lastAtomIndex);
-if (this.jbr != null) group.groupID = this.jbr.getGroupID(group3);
-key = "o>";
-} else {
-key = (group.isProtein() ? "p>" : group.isNucleic() ? "n>" : group.isCarbohydrate() ? "c>" : "o>");
-}if (group3 != null) {
+if (this.bml != null) group.groupID = this.bml.getGroupID(group3);
+}var key = group.getGroupMenuKey();
+if (group3 != null) {
 this.countGroup(this.ms.at[firstAtomIndex].mi, key, group3);
 if (group.isNucleic()) {
 var g1 = (this.htGroup1 == null ? null : this.htGroup1.get(group3));
@@ -947,10 +956,11 @@ var v0 = JU.V3.new3(0, 1, 0);
 var v1 =  new JU.V3();
 var bs0 =  new JU.BS();
 bs0.setBits(iatom1, iatom2);
-for (var i = iatom1; i < iatom2; i++) if (!atomlist.get(i) && !bsBranch.get(i)) {
+for (var i = iatom1; i < iatom2; i++) {
+if (!atomlist.get(i) && !bsBranch.get(i)) {
 bsBranch = this.getBranch2dZ(i, -1, bs0, bsBranch, v, v0, v1, stereodir);
 atomlist.or(bsBranch);
-}
+}}
 }, "JU.V3,~N");
 Clazz.defineMethod(c$, "getBranch2dZ", 
 function(atomIndex, atomIndexNot, bs0, bsBranch, v, v0, v1, dir){
@@ -1035,24 +1045,27 @@ JU.Logger.warn("createAtomDataSet: no atom found at position " + pt);
 continue;
 } else if (n > 1 && JU.Logger.debugging) {
 JU.Logger.debug("createAtomDataSet: " + n + " atoms found at position " + pt);
-}}switch (tokType) {
-case 1145047055:
+}}if (tokType == 1145047055) {
 var vib = iterAtom.getVib();
-if (vib == null) continue;
+if (vib != null) {
 if (JU.Logger.debugging) JU.Logger.debug("xyz: " + pt + " vib: " + vib);
 modelSet.setAtomCoords(bs, 1145047055, vib);
-break;
+}continue;
+}var d = NaN;
+switch (tokType) {
 case 1128269825:
-modelSet.setAtomProperty(bs, tokType, 0, iterAtom.getOccupancy(), null, null, null);
+d = iterAtom.getOccupancy();
 break;
 case 1111492619:
-modelSet.setAtomProperty(bs, tokType, 0, iterAtom.getPartialCharge(), null, null, null);
+d = iterAtom.getPartialCharge();
 break;
 case 1111492620:
-modelSet.setAtomProperty(bs, tokType, 0, iterAtom.getBfactor(), null, null, null);
+d = iterAtom.getBfactor();
 break;
 }
-}
+if (!Float.isNaN(d)) {
+modelSet.setAtomProperty(bs, tokType, 0, d, null, null, null);
+}}
 switch (tokType) {
 case 1145047055:
 var vibName = adapter.getAtomSetName(asc, 0);
@@ -1068,4 +1081,4 @@ break;
 return null;
 }, "JV.Viewer,JM.ModelSet,~N,~O,JU.BS");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

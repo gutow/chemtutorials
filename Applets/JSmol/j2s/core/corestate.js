@@ -65,7 +65,7 @@ Clazz_declarePackage("JV");
 (function(){
 var c$ = Clazz_declareType(JV, "JmolStateCreator", null);
 })();
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JV");
 Clazz_load(["JV.JmolStateCreator", "java.util.Hashtable"], "JV.StateCreator", ["java.util.Arrays", "$.Date", "JU.BS", "$.Lst", "$.P3", "$.PT", "$.SB", "J.c.PAL", "$.STR", "$.VDW", "JM.AtomCollection", "$.Bond", "$.BondSet", "JS.T", "J.shape.Shape", "JU.BSUtil", "$.C", "$.ColorEncoder", "$.Edge", "$.Escape", "$.Font", "$.Logger", "JV.GlobalSettings", "$.JC", "$.StateManager", "$.Viewer"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -203,8 +203,7 @@ loadUC = true;
 commands.append("  frame ").append(ms.getModelNumberDotted(i)).appendSB(sb).append(";\n");
 }haveModulation = new Boolean (haveModulation | (this.vwr.ms.getLastVibrationVector(i, 1275072532) >= 0)).valueOf();
 }
-if (loadUC) this.vwr.shm.loadShape(33);
-this.getShapeStatePriv(commands, isAll, 33);
+this.getUnitCellState(commands, isAll, loadUC);
 if (haveModulation) {
 var temp =  new java.util.Hashtable();
 var ivib;
@@ -255,7 +254,7 @@ if (needOrientations && m.orientation != null && !ms.isTrajectorySubFrame(i)) sb
 if (m.frameDelay != 0 && !ms.isTrajectorySubFrame(i)) sb.append("  frame delay ").appendF(m.frameDelay / 1000).append(";\n");
 if (m.simpleCage != null) {
 sb.append("  unitcell ").append(JU.Escape.eAP(m.simpleCage.getUnitCellVectors())).append(";\n");
-this.getShapeStatePriv(sb, isAll, 33);
+this.getUnitCellState(sb, isAll, true);
 }if (sb.length() > 0) commands.append("  frame " + ms.getModelNumberDotted(i) + ";\n").appendSB(sb);
 }
 commands.append("  set fontScaling " + this.vwr.getBoolean(603979847) + ";\n");
@@ -263,6 +262,11 @@ if (this.vwr.is2D()) {
 commands.append("  set mode2d TRUE;\n");
 }}if (sfunc != null) commands.append("\n}\n\n");
 return commands.toString();
+}, "JU.SB,~B,~B");
+Clazz_defineMethod(c$, "getUnitCellState", 
+function(commands, isAll, loadUC){
+if (loadUC) this.vwr.shm.loadShape(33);
+this.getShapeStatePriv(commands, isAll, 33);
 }, "JU.SB,~B,~B");
 Clazz_defineMethod(c$, "getWindowState", 
 function(sfunc, width, height){
@@ -330,8 +334,8 @@ for (var i = 0; i < modelCount; i++) {
 if (ms.isJmolDataFrame(i) || ms.isTrajectorySubFrame(i)) continue;
 var m = models[i];
 var pt = commands.indexOf(m.loadState);
-if (pt < 0 || pt != commands.lastIndexOf(m.loadState)) commands.append(models[i].loadState);
-if (models[i].isModelKit) {
+if (pt < 0 || pt != commands.lastIndexOf(m.loadState)) commands.append(m.loadState);
+if (m.isModelKit) {
 var bs = ms.getModelAtomBitSetIncludingDeleted(i, false);
 if (ms.tainted != null) {
 if (ms.tainted[2] != null) ms.tainted[2].andNot(bs);
@@ -689,6 +693,7 @@ Clazz_defineMethod(c$, "getShapeStatePriv",
 function(commands, isAll, iShape){
 var shapes = this.vwr.shm.shapes;
 if (shapes == null) return;
+var shape = null;
 var i;
 var imax;
 if (iShape == 2147483647) {
@@ -697,7 +702,7 @@ imax = 37;
 } else {
 imax = (i = iShape) + 1;
 }for (; i < imax; ++i) {
-var shape = shapes[i];
+shape = shapes[i];
 if (shape != null && (isAll || i >= 9 && i < 16)) {
 var cmd = this.getShapeState(shape);
 if (cmd != null && cmd.length > 1) commands.append(cmd);
@@ -746,11 +751,11 @@ case 34:
 s = this.getAxesState(shape);
 break;
 case 33:
-if (!this.vwr.ms.haveUnitCells) return "";
+var uc = this.vwr.getCurrentUnitCell();
+if (uc == null && !this.vwr.ms.haveUnitCells) return "";
 var st = s = this.getFontLineShapeState(shape);
 var iAtom = this.vwr.am.getUnitCellAtomIndex();
 if (iAtom >= 0) s += "  unitcell ({" + iAtom + "});\n";
-var uc = this.vwr.getCurrentUnitCell();
 if (uc != null) {
 s += uc.getUnitCellState();
 s += st;
@@ -811,18 +816,20 @@ for (var i = l.bsSizeSet.nextSetBit(0); i >= 0; i = l.bsSizeSet.nextSetBit(i + 1
 if (!bs.get(i)) continue;
 var t = l.getLabel(i);
 var cmd = "label ";
+var isPymolOffset = false;
 if (t == null) {
 cmd += JU.PT.esc(l.formats[i]);
 } else {
 cmd += JU.PT.esc(t.textUnformatted);
-if (t.getPymolOffset() != null) cmd += ";set labelOffset " + JU.Escape.eAF(t.getPymolOffset());
+isPymolOffset = (t.getPymolOffset() != null);
+if (isPymolOffset) cmd += ";set labelOffset " + JU.Escape.eAF(t.getPymolOffset());
 }JU.BSUtil.setMapBitSet(this.temp, i, i, cmd);
 if (l.bsColixSet != null && l.bsColixSet.get(i)) JU.BSUtil.setMapBitSet(this.temp2, i, i, J.shape.Shape.getColorCommand("label", l.paletteIDs[i], l.colixes[i], l.translucentAllowed));
 if (l.bsBgColixSet != null && l.bsBgColixSet.get(i)) JU.BSUtil.setMapBitSet(this.temp2, i, i, "background label " + J.shape.Shape.encodeColor(l.bgcolixes[i]));
 var text = l.getLabel(i);
 var sppm = (text != null ? text.scalePixelsPerMicron : 0);
 if (sppm > 0) JU.BSUtil.setMapBitSet(this.temp2, i, i, "set labelScaleReference " + (10000 / sppm));
-if (l.offsets != null && l.offsets.length > i) {
+if (!isPymolOffset && l.offsets != null && l.offsets.length > i) {
 var offsetFull = l.offsets[i];
 JU.BSUtil.setMapBitSet(this.temp2, i, i, "set " + (JV.JC.isOffsetAbsolute(offsetFull) ? "labelOffsetAbsolute " : "labelOffset ") + JV.JC.getXOffset(offsetFull) + " " + JV.JC.getYOffset(offsetFull));
 var align = JV.JC.getHorizAlignmentName(offsetFull >> 2);
@@ -1220,7 +1227,7 @@ this.actionStates.removeItemAt(99);
 this.undoWorking = !clearRedo;
 }, "~N,~N,~B");
 });
-;//5.0.1-v7 Fri Jun 12 11:30:14 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026
 })(Clazz
 ,Clazz.getClassName
 ,Clazz.newLongArray

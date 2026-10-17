@@ -1,12 +1,12 @@
 Clazz.declarePackage("J.adapter.readers.pdb");
 Clazz.load(["J.adapter.readers.pdb.PdbReader"], "J.adapter.readers.pdb.JmolDataReader", ["java.util.Hashtable", "JU.Lst", "$.P3", "$.PT", "JS.T", "JU.C", "$.Escape", "$.Logger", "$.Parser", "$.Vibration"], function(){
 var c$ = Clazz.decorateAsClass(function(){
-this.props = null;
 this.residueNames = null;
 this.atomNames = null;
 this.isSpin = false;
 this.spinFactor = 0;
 this.originatingModel = -1;
+this.props = null;
 this.jmolDataHeader = null;
 this.jmolDataScaling = null;
 Clazz.instantialize(this, arguments);}, J.adapter.readers.pdb, "JmolDataReader", J.adapter.readers.pdb.PdbReader);
@@ -18,7 +18,6 @@ switch ("Ppard".indexOf(this.line.substring(16, 17))) {
 case 0:
 this.props =  new java.util.Hashtable();
 this.isSpin = (this.line.indexOf(": spin;") >= 0);
-this.originatingModel = -1;
 var pt = this.line.indexOf("for model ");
 if (pt > 0) this.originatingModel = JU.PT.parseInt(this.line.substring(pt + 10));
 this.jmolDataHeader = this.line;
@@ -84,8 +83,9 @@ this.checkCurrentLineForScript();
 });
 Clazz.defineMethod(c$, "processAtom2", 
 function(atom, serial, x, y, z, charge){
+var vib = null;
 if (this.isSpin) {
-var vib =  new JU.Vibration();
+vib =  new JU.Vibration();
 vib.set(x, y, z);
 vib.isFrom000 = true;
 atom.vib = vib;
@@ -93,23 +93,31 @@ x *= this.spinFactor;
 y *= this.spinFactor;
 z *= this.spinFactor;
 }Clazz.superCall(this, J.adapter.readers.pdb.JmolDataReader, "processAtom2", [atom, serial, x, y, z, charge]);
-}, "J.adapter.smarter.Atom,~N,~N,~N,~N,~N");
-Clazz.overrideMethod(c$, "setAdditionalAtomParameters", 
+if (vib != null) {
+vib.spin = Clazz.floatToInt(atom.bfactor);
+atom.bfactor = NaN;
+}}, "J.adapter.smarter.Atom,~N,~N,~N,~N,~N");
+Clazz.defineMethod(c$, "setAdditionalAtomParameters", 
 function(atom){
+Clazz.superCall(this, J.adapter.readers.pdb.JmolDataReader, "setAdditionalAtomParameters", [atom]);
 if (this.residueNames != null && atom.index < this.residueNames.length) atom.group3 = this.residueNames[atom.index];
 if (this.atomNames != null && atom.index < this.atomNames.length) atom.atomName = this.atomNames[atom.index];
 }, "J.adapter.smarter.Atom");
 Clazz.overrideMethod(c$, "finalizeSubclassReader", 
 function(){
 if (this.jmolDataHeader == null) return;
-var info =  new java.util.Hashtable();
-info.put("header", this.jmolDataHeader);
-info.put("originatingModel", Integer.$valueOf(this.originatingModel));
-info.put("properties", this.props);
-info.put("jmolDataScaling", this.jmolDataScaling);
-this.asc.setInfo("jmolData", info);
+this.setJmolDataInfo(this.props, this.jmolDataHeader, this.originatingModel, this.jmolDataScaling);
 this.finalizeReaderPDB();
 });
+Clazz.defineMethod(c$, "setJmolDataInfo", 
+function(props, jmolDataHeader, originatingModel, jmolDataScaling){
+var info =  new java.util.Hashtable();
+if (props != null) info.put("properties", props);
+if (originatingModel >= 0) info.put("originatingModel", Integer.$valueOf(originatingModel));
+if (jmolDataScaling != null) info.put("jmolDataScaling", jmolDataScaling);
+if (jmolDataHeader != null) info.put("header", jmolDataHeader);
+this.asc.setInfo("jmolData", info);
+}, "java.util.Map,~S,~N,~A");
 Clazz.defineMethod(c$, "getJmolDataFrameScripts", 
 function(vwr, tok, modelIndex, modelCount, type, qFrame, props, isSpinPointGroup){
 var script;
@@ -117,6 +125,9 @@ var script2 = null;
 switch (tok) {
 default:
 script = "frame 0.0; frame last; reset;select visible;wireframe only;";
+break;
+case 1073742117:
+script = "frame 0.0; frame last; reset;select visible;spacefill -0.1;";
 break;
 case 1715472409:
 vwr.setFrameTitle(modelCount - 1, type + " plot for model " + vwr.getModelNumberDotted(modelIndex));
@@ -140,20 +151,25 @@ script2 = ";set symmetryhm;draw spin pointgroup;var name = {2.1}.pointgroup().hm
 return  Clazz.newArray(-1, [script, script2]);
 }, "JV.Viewer,~N,~N,~N,~S,~S,~A,~B");
 Clazz.defineMethod(c$, "getJmolDataFrameProperties", 
-function(e, tok, propToks, props, bs, minXYZ, maxXYZ, format, isPdbFormat){
+function(e, tok, propToks, props, data, bs, minXYZ, maxXYZ, format, isPdbFormat){
 var pdbFactor = 1;
 var dataX = null;
 var dataY = null;
 var dataZ = null;
-dataX = e.getBitsetPropertyFloat(bs, propToks[0] | 224, propToks[0] == 1715472409 ? props[0] : null, (minXYZ == null ? NaN : minXYZ.x), (maxXYZ == null ? NaN : maxXYZ.x));
+var data3 = null;
+var dataLength = (data == null ? 0 : data.length);
+dataX = (dataLength > 0 ? data[0] : e.getBitsetPropertyFloat(bs, propToks[0] | 224, propToks[0] == 1715472409 ? props[0] : null, (minXYZ == null ? NaN : minXYZ.x), (maxXYZ == null ? NaN : maxXYZ.x)));
 var propData =  new Array(3);
 propData[0] = props[0] + " " + JU.Escape.eAF(dataX);
 if (props[1] != null) {
-dataY = e.getBitsetPropertyFloat(bs, propToks[1] | 224, propToks[1] == 1715472409 ? props[1] : null, (minXYZ == null ? NaN : minXYZ.y), (maxXYZ == null ? NaN : maxXYZ.y));
+dataY = (dataLength > 1 ? data[1] : e.getBitsetPropertyFloat(bs, propToks[1] | 224, propToks[1] == 1715472409 ? props[1] : null, (minXYZ == null ? NaN : minXYZ.y), (maxXYZ == null ? NaN : maxXYZ.y)));
 propData[1] = props[1] + " " + JU.Escape.eAF(dataY);
 }if (props[2] != null) {
-dataZ = e.getBitsetPropertyFloat(bs, propToks[2] | 224, propToks[2] == 1715472409 ? props[2] : null, (minXYZ == null ? NaN : minXYZ.z), (maxXYZ == null ? NaN : maxXYZ.z));
+dataZ = (dataLength > 2 ? data[2] : e.getBitsetPropertyFloat(bs, propToks[2] | 224, propToks[2] == 1715472409 ? props[2] : null, (minXYZ == null ? NaN : minXYZ.z), (maxXYZ == null ? NaN : maxXYZ.z)));
 propData[2] = props[2] + " " + JU.Escape.eAF(dataZ);
+}if (props[3] != null) {
+data3 = e.getBitsetPropertyFloat(bs, propToks[3] | 224, propToks[3] == 1715472409 ? props[3] : null, NaN, NaN);
+propData[3] = props[3] + " " + JU.Escape.eAF(data3);
 }if (minXYZ == null) minXYZ = JU.P3.new3(J.adapter.readers.pdb.JmolDataReader.getPlotMinMax(dataX, false, propToks[0]), J.adapter.readers.pdb.JmolDataReader.getPlotMinMax(dataY, false, propToks[1]), J.adapter.readers.pdb.JmolDataReader.getPlotMinMax(dataZ, false, propToks[2]));
 if (maxXYZ == null) maxXYZ = JU.P3.new3(J.adapter.readers.pdb.JmolDataReader.getPlotMinMax(dataX, true, propToks[0]), J.adapter.readers.pdb.JmolDataReader.getPlotMinMax(dataY, true, propToks[1]), J.adapter.readers.pdb.JmolDataReader.getPlotMinMax(dataZ, true, propToks[2]));
 JU.Logger.info("plot min/max: " + minXYZ + " " + maxXYZ);
@@ -164,7 +180,13 @@ factors = JU.P3.new3(1, 1, 1);
 center =  new JU.P3();
 center.ave(maxXYZ, minXYZ);
 factors.sub2(maxXYZ, minXYZ);
-if (tok != 1095241729) factors.set(factors.x / 200, factors.y / 200, factors.z / 200);
+switch (tok) {
+case 1095241729:
+case 1073742117:
+break;
+default:
+factors.set(factors.x / 200, factors.y / 200, factors.z / 200);
+}
 if (JS.T.tokAttr(propToks[0], 1094713344)) {
 factors.x = 1;
 center.x = 0;
@@ -187,8 +209,8 @@ if (props[1] != null) for (var i = 0; i < dataY.length; i++) dataY[i] = (dataY[i
 
 if (props[2] != null) for (var i = 0; i < dataZ.length; i++) dataZ[i] = (dataZ[i] - center.z) / factors.z * pdbFactor;
 
-}return  Clazz.newArray(-1, [bs, dataX, dataY, dataZ, minXYZ, maxXYZ, factors, center, format, propData, Float.$valueOf(1)]);
-}, "JS.ScriptEval,~N,~A,~A,JU.BS,JU.P3,JU.P3,~S,~B");
+}return  Clazz.newArray(-1, [bs, dataX, dataY, dataZ, minXYZ, maxXYZ, factors, center, format, propData, Float.$valueOf(1), data3]);
+}, "JS.ScriptEval,~N,~A,~A,~A,JU.BS,JU.P3,JU.P3,~S,~B");
 c$.getPlotMinMax = Clazz.defineMethod(c$, "getPlotMinMax", 
 function(data, isMax, tok){
 if (data == null) return 0;
@@ -203,13 +225,13 @@ return (isMax ? 360 : 0);
 case 1111490574:
 return (isMax ? 1 : -1);
 }
-var fmax = (isMax ? -1.0E10 : 1E10);
+var fminmax = (isMax ? -1.0E10 : 1E10);
 for (var i = data.length; --i >= 0; ) {
 var f = data[i];
 if (Float.isNaN(f)) continue;
-if (isMax == (f > fmax)) fmax = f;
+if (isMax == (f > fminmax)) fminmax = f;
 }
-return fmax;
+return fminmax;
 }, "~A,~B,~N");
 Clazz.defineMethod(c$, "setJmolDataFrame", 
 function(ms, type, modelIndex, modelDataIndex){
@@ -251,6 +273,8 @@ maxXYZ.set(len, len, len);
 var lst =  new JU.Lst();
 for (var i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i + 1)) {
 var v = vwr.ms.getVibration(i, false);
+var spin = vwr.ms.getSpin(i);
+v.spin = spin;
 var found = false;
 for (var j = lst.size(); --j >= 0; ) {
 if (v.distance(lst.get(j)) < 0.1) {
@@ -263,4 +287,4 @@ if (!found) lst.addLast(v);
 return bs;
 }, "JV.Viewer,JU.BS,~N,JU.P3,JU.P3");
 });
-;//5.0.1-v7 Fri Jun 12 11:30:14 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

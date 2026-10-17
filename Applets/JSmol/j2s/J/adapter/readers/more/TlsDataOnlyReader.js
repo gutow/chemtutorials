@@ -81,4 +81,4 @@ this.sbTlsErrors.append(this.fileName).appendC('\t').append("TLS group ").append
 c$.TLnn =  Clazz.newArray(-1, ["11", "22", "33", "12", "13", "23"]);
 c$.Snn =  Clazz.newArray(-1, ["22", "11", "12", "13", "23", "21", "31", "32"]);
 });
-;//5.0.1-v7 Fri Jun 12 11:18:14 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026

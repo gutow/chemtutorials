@@ -451,11 +451,13 @@ this.bsUniqueBonds = this.bsStickBonds = this.bsLineBonds = null;
 Clazz.defineMethod(c$, "finalizeObjects", 
 function(){
 this.vwr.setStringProperty("defaults", "PyMOL");
+var needToCache = false;
 for (var i = 0; i < this.jmolObjects.size(); i++) {
 try {
 var obj = this.jmolObjects.get(i);
-obj.finalizeObject(this, this.vwr.ms, this.mepList, this.doCache);
-} catch (e) {
+if (obj.finalizeObject(this, this.vwr.ms, this.mepList, this.doCache)) {
+needToCache = true;
+}} catch (e) {
 if (Clazz.exceptionOf(e, Exception)){
 System.out.println(e);
 e.printStackTrace();
@@ -465,7 +467,9 @@ throw e;
 }
 }
 this.finalizeUniqueBonds();
-this.jmolObjects.clear();
+if (needToCache) {
+this.vwr.runScriptCautiously("isosurface cache all");
+}this.jmolObjects.clear();
 });
 Clazz.defineMethod(c$, "offsetObjects", 
 function(){
@@ -881,7 +885,6 @@ function(){
 if (this.pymolVersion < 100) {
 this.addVersionSetting(550, 2, Integer.$valueOf(0));
 this.addVersionSetting(529, 2, Integer.$valueOf(2));
-this.addVersionSetting(471, 4,  Clazz.newDoubleArray(-1, [1, 1, 0]));
 if (this.pymolVersion < 99) {
 this.addVersionSetting(448, 2, Integer.$valueOf(0));
 this.addVersionSetting(431, 2, Integer.$valueOf(0));
@@ -1295,4 +1298,4 @@ this.jmolToUniqueID =  Clazz.newIntArray (nAtomsJmol, 0);
 }, "~N");
 c$.MEAS_DIGITS =  Clazz.newIntArray(-1, [530, 531, 532]);
 });
-;//5.0.1-v7 Fri Jun 12 11:18:14 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

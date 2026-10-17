@@ -13,6 +13,8 @@ this.fullName = null;
 this.readingSCIF = false;
 this.scifOutputs = null;
 this.$loadNote = null;
+this.modelNames = null;
+this.modelSCIF = null;
 this.p2 = null;
 this.p1 = null;
 Clazz.instantialize(this, arguments);}, J.adapter.readers.xtal, "FSGOutputReader", J.adapter.readers.cif.CifReader);
@@ -39,21 +41,41 @@ throw e;
 Clazz.defineMethod(c$, "readData", 
 function(){
 if (this.readingSCIF) {
+if (this.htParams.containsKey("modelNumber")) this.desiredModelNumber = (this.htParams.get("modelNumber")).intValue();
 var s = "";
 this.$loadNote = "";
 var n = 0;
+this.modelNames =  new JU.Lst();
+this.modelSCIF =  new JU.Lst();
 for (var e, $e = this.scifOutputs.entrySet().iterator (); $e.hasNext()&& ((e = $e.next ()) || true);) {
 var name = e.getKey();
-this.$loadNote += "\nmodel " + ++n + " is " + name;
+++n;
 var scif = e.getValue();
-scif.$replace("\ndata_", "\ndata_" + name + "_");
+var pt = scif.indexOf("\ndata_");
+var pt1 = scif.indexOf('\n', pt + 1);
+scif = scif.substring(0, pt + 6) + name + scif.substring(pt1);
 s += scif + "\n";
-}
-this.$loadNote = n + " models were read from the FSG JSON:" + this.$loadNote;
+if (this.desiredModelNumber < 1 || this.desiredModelNumber == n) {
+this.modelNames.addLast(name);
+this.modelSCIF.addLast(scif);
+}}
 this.reader = JU.Rdr.getBR(s);
-return Clazz.superCall(this, J.adapter.readers.xtal.FSGOutputReader, "readData", []);
+var o = Clazz.superCall(this, J.adapter.readers.xtal.FSGOutputReader, "readData", []);
+this.appendLoadNote((this.asc.iSet + 1) + " models were read from the FSG JSON");
+return o;
 }return Clazz.superCall(this, J.adapter.readers.xtal.FSGOutputReader, "readData", []);
 });
+Clazz.defineMethod(c$, "newAtomSet", 
+function(){
+Clazz.superCall(this, J.adapter.readers.xtal.FSGOutputReader, "newAtomSet", []);
+var n = 0;
+if (this.modelNames != null) {
+var name = this.modelNames.removeItemAt(0);
+var note = "model " + ++n + " is " + name;
+this.appendLoadNote(note);
+this.asc.setCurrentModelInfo("scif", this.modelSCIF.removeItemAt(0));
+this.asc.setCurrentModelInfo("title", name);
+}});
 Clazz.defineMethod(c$, "initializeReader", 
 function(){
 Clazz.superCall(this, J.adapter.readers.xtal.FSGOutputReader, "initializeReader", []);
@@ -486,4 +508,4 @@ m4.invert();
 }return JS.SymmetryOperation.getTransformABC(m4, false);
 }, "JU.M4");
 });
-;//5.0.1-v7 Fri Jun 12 11:30:14 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

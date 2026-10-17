@@ -796,6 +796,11 @@ var x = x2.asInt();
 if (x >= 0) {
 bs.set(x);
 }break;
+case 4:
+if ((x2.value).startsWith(";base90+35,")) {
+bs = JU.BSUtil.copy(x1.value);
+bs.or(JS.SV.decodeBase90_35(x2.value));
+}break;
 case 7:
 bs = JU.BSUtil.copy(x1.value);
 var sv = x2.value;
@@ -1332,6 +1337,14 @@ var ptu = JU.P3.newP(x2.value);
 this.vwr.toUnitCell(ptu, null);
 this.vwr.toFractional(ptu, false);
 return (op.intValue == 1145045006 ? this.addXPt(ptu) : this.addXFloat(op.intValue == 1111490577 ? ptu.x : op.intValue == 1111490578 ? ptu.y : ptu.z));
+case 1094713365:
+case 1094713366:
+case 1094713367:
+case 1145047052:
+var pts = JU.P3.newP(x2.value);
+var sc = this.vwr.tm.transformPt(pts);
+pts.set(sc.x, sc.y, sc.z);
+return (op.intValue == 1145047052 ? this.addXPt(pts) : this.addXFloat(op.intValue == 1094713365 ? pts.x : op.intValue == 1094713366 ? pts.y : pts.z));
 }
 break;
 case 9:
@@ -1372,4 +1385,4 @@ return (isAtoms ? this.addXObj(val) : this.addXBs(JM.BondSet.newBS(val)));
 return false;
 }, "JS.T,JS.SV");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

@@ -1,5 +1,5 @@
 Clazz.declarePackage("JS");
-Clazz.load(null, "JS.MathExt", ["java.util.Date", "$.Hashtable", "$.Random", "JU.A4", "$.AU", "$.BArray", "$.BS", "$.CU", "$.Lst", "$.M3", "$.M4", "$.Measure", "$.OC", "$.P3", "$.P4", "$.PT", "$.Quat", "$.Rdr", "$.SB", "$.V3", "J.api.Interface", "J.atomdata.RadiusData", "J.bspt.PointIterator", "J.c.VDW", "J.i18n.GT", "JM.BondSet", "$.Measurement", "JS.SV", "$.T", "JU.BSUtil", "$.BoxInfo", "$.Edge", "$.Escape", "$.JmolMolecule", "$.Logger", "$.Parser", "$.Point3fi", "$.SimpleUnitCell", "JV.FileManager", "$.JC", "$.Viewer"], function(){
+Clazz.load(null, "JS.MathExt", ["java.util.Date", "$.Hashtable", "$.Random", "JU.A4", "$.AU", "$.BArray", "$.BS", "$.CU", "$.Lst", "$.M3", "$.M4", "$.Measure", "$.OC", "$.P3", "$.P4", "$.PT", "$.Quat", "$.Rdr", "$.SB", "$.V3", "J.api.Interface", "J.atomdata.RadiusData", "J.bspt.PointIterator", "J.c.VDW", "J.i18n.GT", "JM.BondSet", "$.Measurement", "JS.SV", "$.ScriptInterruption", "$.T", "JU.BSUtil", "$.BoxInfo", "$.Edge", "$.Escape", "$.JmolMolecule", "$.Logger", "$.Parser", "$.Point3fi", "$.SimpleUnitCell", "JV.FileManager", "$.JC", "$.Viewer"], function(){
 var c$ = Clazz.decorateAsClass(function(){
 this.vwr = null;
 this.e = null;
@@ -16,7 +16,8 @@ Clazz.defineMethod(c$, "evaluate",
 function(mp, op, args, tok){
 switch (tok) {
 case 134218760:
-return (args.length >= 1 && args[0].tok == 4 ? mp.addXStr((args.length == 1 ?  new java.util.Date().toString() : this.vwr.apiPlatform.getDateFormat(JS.SV.sValue(args[1]))) + "\t" + JS.SV.sValue(args[0]).trim()) : mp.addXInt(((System.currentTimeMillis() - JS.MathExt.t0)) - (args.length == 0 ? 0 : args[0].asInt())));
+var msg = (args.length > 1 ? JS.SV.sValue(args[0]).trim() : "");
+return (args.length >= 1 && args[0].tok == 4 ? mp.addXStr((args.length == 1 ?  new java.util.Date().toString() : this.vwr.apiPlatform.getDateFormat(JS.SV.sValue(args[1]))) + (msg.length == 0 ? "" : "\t" + msg)) : mp.addXInt(((System.currentTimeMillis() - JS.MathExt.t0)) - (args.length == 0 ? 0 : args[0].asInt())));
 case 134218250:
 return (args.length == 1 && args[0].tok == 2 ? mp.addXInt(Math.abs(args[0].intValue)) : mp.addXFloat(Math.abs(args[0].asFloat())));
 case 134218241:
@@ -321,13 +322,13 @@ Clazz.defineMethod(c$, "matToString",
 function(m4, mode){
 var sym = this.vwr.getSymStatic();
 var smode;
-var noFractions = ((mode & 0x1000) != 0);
-switch (mode) {
-case 47:
+var noFractions = ((mode & 4096) != 0);
+switch (mode & -4097) {
+case 64:
 case 0x1:
 smode = "rxyz";
 break;
-case 39:
+case 56:
 case 0xABC:
 if (Clazz.instanceOf(m4,"JU.M3")) {
 var m = JU.M4.newM4(null);
@@ -335,12 +336,12 @@ m.setRotationScale(m4);
 return sym.staticGetTransformABC(m, false);
 }smode = "abc";
 break;
-case 43:
+case 60:
 case 0xDEF:
 smode = "uvw";
 break;
 default:
-case 35:
+case 52:
 smode = "xyz";
 }
 if (noFractions) smode = smode.toUpperCase();
@@ -358,7 +359,7 @@ if (nargs == 0) return mp.addXObj(this.vwr.getSymTemp().getSpaceGroupInfo(this.v
 var mode = (args[args.length - 1].tok == 4 ? args[args.length - 1].value : null);
 var isSettings = "settings".equalsIgnoreCase(mode);
 var isSetting = "setting".equalsIgnoreCase(mode);
-var isSubgroups = (nargs > 1 && (nargs != 2 || !isSettings && !isSetting && !"list".equalsIgnoreCase(mode) && !"jmol".equalsIgnoreCase(mode)));
+var isSubgroups = (nargs > 1 && (nargs != 2 || !isSettings && !isSetting && mode != null && !"list".equalsIgnoreCase(mode) && !"jmol".equalsIgnoreCase(mode)));
 var xyzList = args[0].asString();
 if (isSubgroups || "subgroups".equals(mode)) {
 var ret = this.getSubgroupInfo(args, "subgroups".equals(mode) ? nargs : nargs + 1);
@@ -401,7 +402,7 @@ return mp.addXObj(this.vwr.getSymTemp().getSpaceGroupJSON("ITA", xyzList.substri
 }}break;
 }
 if (ret == null) ret = this.vwr.getSymStatic().getSpaceGroupInfoObj(xyzList, params, true, false);
-if (ret != null && !"jmol".equals(mode) && !"list".equals(mode)) {
+if (Clazz.instanceOf(ret,"java.util.Map") && !"jmol".equals(mode) && !"list".equals(mode)) {
 var o = (ret).get("itaIndex");
 if (o != null) {
 ret = this.vwr.getSymTemp().getSpaceGroupJSON("ITA", o.toString(), 0);
@@ -444,9 +445,15 @@ var center = null;
 var distanceTolerance = -1;
 var linearTolerance = -1;
 var bsAtoms = null;
-var type = null;
 var isSpaceGroup = false;
-switch (args.length) {
+var len = args.length;
+var type = null;
+if (len > 0 && args[len - 1].tok == 4) {
+var v = args[len - 1].value;
+if (v.indexOf("u") >= 0) {
+type = v;
+len--;
+}}switch (len) {
 case 4:
 linearTolerance = args[3].asFloat();
 case 3:
@@ -519,19 +526,31 @@ var b = this.vwr.ms.getBoxInfo(x1, 1);
 return mp.addXObj(b.getInfo(lastParam == 0 ? null : args[0].asString()));
 }var isInfo = false;
 var asMatrix = (lastParam >= 0 && args[lastParam].tok == 1073742335);
+var asString = false;
+var noFractions = false;
 if (lastParam >= 0 && args[lastParam].tok == 4) {
 var infoType = args[lastParam].value;
-isInfo = "info".equals(infoType);
-if (isInfo) {
-if (isInfo && lastParam == 0) {
+switch (infoType) {
+case "info":
+isInfo = true;
+if (lastParam == 0) {
 var sym = this.vwr.getCurrentUnitCell();
 return mp.addXMap(sym.getUnitCellInfoMap());
 }lastParam--;
-} else {
+break;
+case "ABC":
+noFractions = true;
+case "abc":
+asString = asMatrix = true;
+lastParam--;
+break;
+default:
 var infoValue = this.vwr.getUnitCellInfoStr(infoType);
 if (!Float.isNaN(infoValue)) {
 return mp.addXFloat(infoValue);
-}}}var o = this.getUnitCell(args, iatom, 0, lastParam);
+}break;
+}
+}var o = this.getUnitCell(args, iatom, 0, lastParam);
 if (JU.AU.isAP(o)) {
 var oabc = o;
 if (isInfo) {
@@ -551,7 +570,7 @@ m4.m03 = 1;
 } else {
 m4.setColumn4(i - 1, p.x, p.y, p.z, 0);
 }}
-return mp.addXM4(m4);
+return (asString ? mp.addXStr(this.matToString(m4, 0xABC | (noFractions ? 4096 : 0))) : mp.addXM4(m4));
 }}return (o != null && mp.addXObj(o));
 }, "JS.ScriptMathProcessor,~A,~B,~N");
 Clazz.defineMethod(c$, "getUnitCell", 
@@ -604,13 +623,13 @@ arg0 = arg0.substring(1);
 }if (arg0.startsWith("unitcell_")) {
 arg0 = this.vwr.getCurrentModelAuxInfo().get(arg0);
 if (arg0 == null) return null;
-if (isNot) arg0 = "!" + arg0;
 } else {
-arg0 = null;
-}}break;
+arg0 = this.vwr.getCurrentModelAuxInfo().get("unitcell_" + arg0);
+}if (arg0 != null && isNot) arg0 = "!" + arg0;
+}break;
 }
 if (arg0 != null) {
-var asMatrix = (lastParam > ipt && JS.SV.bValue(args[ipt + 1]));
+var asMatrix = (lastParam > ipt && args[ipt + 1].tok == 1073742335);
 if (asMatrix) return (isWithin ? null : this.vwr.getSymTemp().convertTransform(arg0, null));
 ucnew = this.vwr.getV0abc(-1, arg0);
 if (ucnew == null) return null;
@@ -661,7 +680,9 @@ break;
 return null;
 }
 }}var op = (ptParam <= lastParam ? args[ptParam].asString() : null);
-var toPrimitive = "primitive".equalsIgnoreCase(op);
+if ("vertices".equalsIgnoreCase(op)) {
+return (isWithin ? null : JU.BoxInfo.getVerticesFromOABC(ucnew));
+}var toPrimitive = "primitive".equalsIgnoreCase(op);
 if (toPrimitive || "conventional".equalsIgnoreCase(op)) {
 var stype = (++ptParam > lastParam ? "" : args[ptParam].asString().toUpperCase());
 if (stype.equals("BCC")) stype = "I";
@@ -673,8 +694,6 @@ if (!u.toFromPrimitive(toPrimitive, stype.charAt(0), ucnew, m3)) return null;
 } else if ("reciprocal".equalsIgnoreCase(op)) {
 ucnew = JU.SimpleUnitCell.getReciprocal(ucnew, null, scale);
 scale = 1;
-} else if ("vertices".equalsIgnoreCase(op)) {
-return (isWithin ? null : JU.BoxInfo.getVerticesFromOABC(ucnew));
 }}if (scale != 1) for (var i = 1; i < 4; i++) ucnew[i].scale(scale);
 
 return ucnew;
@@ -812,8 +831,64 @@ return mp.addXList(lst);
 }, "JS.ScriptMathProcessor,~A");
 Clazz.defineMethod(c$, "evaluateCache", 
 function(mp, args){
-if (args.length > 0) return false;
-return mp.addXMap(this.vwr.fm.cacheList());
+var pt = -1;
+var data;
+var len = args.length;
+if (len == 0) return mp.addXMap(this.vwr.fm.cacheList());
+if (len < 2 || len > 3 || args[0].tok != 4 || args[1].tok != 4) return false;
+var key = args[1].value;
+switch (args[0].asString().toLowerCase()) {
+case "get":
+break;
+case "put":
+if (len != 3) return false;
+var o = args[2].value;
+switch (args[2].tok) {
+case 4:
+if (args[2].asString().length == 0) {
+o = null;
+}break;
+case 15:
+o = args[2].value;
+break;
+default:
+o = args[2].asString();
+break;
+}
+len = (o == null ? 0 : (typeof(o)=='string') ? (o).length : (o).length);
+if (len == 0) o = null;
+this.vwr.cachePut(key, o);
+return mp.addXInt(len);
+default:
+return false;
+}
+switch (args.length) {
+case 3:
+pt = JS.SV.getFormatType(args[2].asString().toLowerCase());
+case 2:
+data = this.vwr.fm.cacheGet(key, false);
+if (data == null) data = "";
+break;
+default:
+return false;
+}
+if (pt < 0) pt = JS.SV.getFormatType("string");
+var isDataString = ((typeof(data)=='string'));
+switch (pt) {
+default:
+return false;
+case 38:
+if (isDataString) return mp.addXStr(data);
+case 5:
+case 22:
+if ((typeof(data)=='string')) {
+data = (data).getBytes();
+} else if (!JU.AU.isAB(data)) {
+return false;
+}data = JS.SV.fromBytes(data, pt);
+if ((typeof(data)=='string')) return mp.addXStr(data);
+return mp.addXObj(data);
+}
 }, "JS.ScriptMathProcessor,~A");
 Clazz.defineMethod(c$, "evaluateColor", 
 function(mp, args){
@@ -1869,16 +1944,22 @@ break;
 switch (pt) {
 case -1:
 break;
-case 35:
-case 39:
-case 43:
-case 47:
+case 12:
+var bs = JS.SV.getBitSet(x, true);
+return (bs != null && mp.addXStr(JS.SV.encodeBitSet90_35(bs)));
+case 45:
+return (x.tok == 4 && (x.value).startsWith(";base90+35,") && mp.addXBs(JS.SV.decodeBase90_35(x.value)));
+case 52:
+case 56:
+case 60:
+case 64:
 return ((x.tok == 12 || x.tok == 11) && mp.addXStr(this.matToString(x.value, pt)));
-case 28:
+case 38:
 case 0:
 return mp.addXStr(JS.SV.getFormat(x, pt));
 default:
-return mp.addXObj(JS.SV.getFormat(x, pt));
+var o = JS.SV.getFormat(x, pt);
+return ((typeof(o)=='string') ? mp.addXStr(o) : mp.addXObj(o));
 }
 var bs = (x1 != null && x1.tok == 10 ? x1.value : null);
 if (!isLabel && x1 != null && bs == null && args.length > 0 && format != null) {
@@ -1890,7 +1971,7 @@ x1 = JS.SV.getVariableList(this.getSublist(listIn, formatList));
 }args =  Clazz.newArray(-1, [args[0], x1]);
 x1 = null;
 }if (x1 == null) {
-if (format == null || pt >= 0 && pt != 28 && args.length != 2) return false;
+if (format == null || pt >= 0 && pt != 38 && args.length != 2) return false;
 if (pt >= 0 || args.length < 2 || args[1].tok != 7) {
 var o = JS.SV.format(args, pt);
 return ((typeof(o)=='string') ? mp.addXStr(o) : mp.addXObj(o));
@@ -2358,10 +2439,21 @@ if (pt2 == null) return mp.addXStr("");
 return mp.addXPt(JU.Measure.getIntersection(pt2, null, plane1, pt3, norm, vTemp));
 }case 3:
 case 4:
+case 5:
 switch (tok) {
 case 134219777:
-var offset = (args.length == 4 ? JS.SV.fValue(args[3]) : NaN);
-plane = this.e.getHklPlane(JU.P3.new3(JS.SV.fValue(args[0]), JS.SV.fValue(args[1]), JS.SV.fValue(args[2])), offset, null);
+var pt = 0;
+var uc = null;
+if (args[0].tok == 7) {
+pt++;
+var v = args[0].getList();
+if (v.size() != 4) return false;
+var oabc =  new Array(4);
+for (var j = 0; j < 4; j++) oabc[j] = JS.SV.ptValue(v.get(j));
+
+uc = this.vwr.getSymTemp().getUnitCell(oabc, false, null);
+}var offset = (args.length == pt + 4 ? JS.SV.fValue(args[pt + 3]) : NaN);
+plane = this.e.getHklPlane(JU.P3.new3(JS.SV.fValue(args[pt]), JS.SV.fValue(args[pt + 1]), JS.SV.fValue(args[pt + 2])), offset, null, uc);
 if (isSelector) {
 break;
 }return plane != null && mp.addXPt4(plane);
@@ -2588,7 +2680,16 @@ var label = JS.SV.sValue(args[0]);
 var buttonArray = (args.length > 1 && args[1].tok == 7 ? JS.SV.strListValue(args[1]) : null);
 var asButtons = (buttonArray != null || args.length == 1 || args.length == 3 && args[2].asBoolean());
 var input = (buttonArray != null ? null : args.length >= 2 ? JS.SV.sValue(args[1]) : "OK");
-var s = "" + this.vwr.prompt(label, input, buttonArray, asButtons);
+var s;
+try {
+s = "" + this.vwr.promptButtons(label, input, buttonArray, asButtons);
+} catch (e) {
+if (Clazz.exceptionOf(e, Exception)){
+throw  new JS.ScriptInterruption(this.vwr.eval, "prompt", 1);
+} else {
+throw e;
+}
+}
 return (asButtons && buttonArray != null ? mp.addXInt(Integer.parseInt(s) + 1) : mp.addXStr(s));
 }, "JS.ScriptMathProcessor,~A");
 Clazz.defineMethod(c$, "evaluateQuaternion", 
@@ -3458,7 +3559,7 @@ plane = args[last].value;
 break;
 case 8:
 pt = args[last].value;
-if (JS.SV.sValue(args[1]).equalsIgnoreCase("hkl")) plane = this.e.getHklPlane(pt, NaN, null);
+if (JS.SV.sValue(args[1]).equalsIgnoreCase("hkl")) plane = this.e.getHklPlane(pt, NaN, null, null);
 break;
 case 7:
 pts1 = (last == 2 && args[1].tok == 7 ? args[1].getList() : null);
@@ -3547,6 +3648,9 @@ var type = args[0].asString().toUpperCase();
 if (type.equals("PNGJ")) {
 var o = this.vwr.fm.getFileAsMap(null, "PNGJ", asBytes);
 return (asBytes ? mp.addX(JS.SV.newV(15,  new JU.BArray(o))) : mp.addXMap(o));
+}if (type.equals("FILE")) {
+var o = this.vwr.getCurrentModelFile(null, asBytes);
+return (asBytes ? mp.addX(JS.SV.newV(15,  new JU.BArray(o))) : mp.addXStr(o));
 }if (JU.PT.isOneOf(type, ";ZIP;ZIPALL;JMOL;")) {
 var params =  new java.util.Hashtable();
 var oc =  new JU.OC();
@@ -3805,4 +3909,4 @@ if (bs.equals(bsA)) bsB.andNot(bsA);
 c$.nan = Float.$valueOf(NaN);
 c$.t0 = System.currentTimeMillis();
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

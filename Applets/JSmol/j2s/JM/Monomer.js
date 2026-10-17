@@ -353,11 +353,11 @@ return '?';
 });
 Clazz.overrideMethod(c$, "setGroupID", 
 function(group3){
-this.groupID = JM.BioResolver.getGroupIdFor(group3);
+this.groupID = JM.BioResolver.getGroupIdStatic(group3);
 }, "~S");
 Clazz.overrideMethod(c$, "toString", 
 function(){
 return "[" + this.getGroup3() + "-" + this.getSeqcodeString() + " " + this.getStructure() + "]";
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

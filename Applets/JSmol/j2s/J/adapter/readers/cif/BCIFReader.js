@@ -78,7 +78,7 @@ switch (catName) {
 case "_entry":
 return this.processEntry();
 case "_atom_site":
-return this.processAtomSiteLoopBlock(false);
+return this.processAtomSiteLoopBlock();
 case "_atom_type":
 return this.processAtomTypeLoopBlock();
 case "_atom_sites":
@@ -157,4 +157,4 @@ return this.bcifParser.dfield;
 }, "~N");
 c$.temp = null;
 });
-;//5.0.1-v7 Fri Jun 12 11:18:14 CDT 2026
+;//5.0.1-v7 Sat Sep 26 19:14:16 CDT 2026

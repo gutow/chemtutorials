@@ -186,11 +186,6 @@ this.getGroupCount();
 for (var i = 0; i < this.chainCount; ++i) this.chains[i].groups = JU.AU.arrayCopyObject(this.chains[i].groups, this.chains[i].groupCount);
 
 });
-Clazz.defineMethod(c$, "setSimpleCage", 
-function(ucell){
-if ((this.simpleCage = ucell) != null) {
-this.auxiliaryInfo.put("unitCellParams", ucell.getUnitCellParams());
-}}, "J.api.SymmetryInterface");
 Clazz.defineMethod(c$, "getUVWMatrix", 
 function(isUVW0){
 if (this.uvw0 == null) {
@@ -204,4 +199,4 @@ m.setColumnV(i, p);
 return m;
 }, "~B");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

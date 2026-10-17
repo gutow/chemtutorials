@@ -255,7 +255,7 @@ this.modelInfo[1]++;
 this.offset = JU.V3.newV(value);
 if (this.thisMesh != null) this.thisMesh.offset(this.offset);
 return;
-}if ("atomSet" === propertyName) {
+}if ("atomset" === propertyName) {
 var bsAtoms = value;
 if (bsAtoms.isEmpty()) return;
 this.vData.addLast( Clazz.newArray(-1, [Integer.$valueOf(3), bsAtoms]));
@@ -480,8 +480,12 @@ this.thisMesh.drawVertexCount = -1;
 this.thisMesh.modelFlags.set(this.indicatedModelIndex);
 this.indicatedModelIndex = -1;
 } else {
-var bsModels = this.vwr.getVisibleFramesBitSet();
-for (var iModel = 0; iModel < modelCount; iModel++) {
+var bsModels = this.vwr.getVisibleFramesBitSetNoJmolData();
+var im = this.vwr.am.getSplitFrameModel();
+if (im >= 0) {
+bsModels.clearAll();
+bsModels.set(this.vwr.am.getSplitFrameModelIndex(0));
+}for (var iModel = 0; iModel < modelCount; iModel++) {
 if (bsModels.get(iModel) && this.setPoints(iModel, -1)) {
 this.setPoints(iModel, this.nPoints);
 this.setPolygon(iModel);
@@ -1244,6 +1248,8 @@ if (mesh.vc == 0 && mesh.lineData == null) continue;
 s.append(this.getCommand2(mesh, mesh.modelIndex));
 if (!mesh.visible) s.append(" " + this.myType + " ID " + JU.PT.esc(mesh.thisID) + " off;\n");
 }
+var mkstate = this.vwr.getModelkitPropertySafely("state");
+if (mkstate != null) s.append(mkstate);
 return s.toString();
 });
 c$.randomPoint = Clazz.defineMethod(c$, "randomPoint", 
@@ -1288,4 +1294,4 @@ Clazz.defineEnumConstant(c$, "LINE_SEGMENT", 11, [20, "lineSegment"]);
 Clazz.defineEnumConstant(c$, "POLYGON", 12, [21, "polygon"]);
 /*eoif2*/})();
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

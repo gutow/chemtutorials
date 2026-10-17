@@ -168,4 +168,4 @@ for (var i = 0; i < this.ac; ++i) this.setAtomCoord(atoms[this.nAtoms + i]);
 
 });
 });
-;//5.0.1-v7 Fri Jun 12 11:18:14 CDT 2026
+;//5.0.1-v7 Mon Sep 28 08:46:51 CDT 2026

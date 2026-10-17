@@ -1020,10 +1020,10 @@ function(ptRef){
 return (this.slabPlane != null && ptRef.x * this.slabPlane.x + ptRef.y * this.slabPlane.y + ptRef.z * this.slabPlane.z + this.slabPlane.w > 0 || this.depthPlane != null && ptRef.x * this.depthPlane.x + ptRef.y * this.depthPlane.y + ptRef.z * this.depthPlane.z + this.depthPlane.w < 0);
 }, "JU.T3");
 Clazz.defineMethod(c$, "move", 
-function(eval, dRot, dZoom, dTrans, dSlab, floatSecondsTotal, fps){
+function(eval, dRot, dZoom, dTrans, dSlab, secondsTotal, fps){
 this.movetoThread = J.api.Interface.getOption("thread.MoveToThread", this.vwr, "tm");
-this.movetoThread.setManager(this, this.vwr,  Clazz.newArray(-1, [dRot, dTrans,  Clazz.newFloatArray(-1, [dZoom, dSlab, floatSecondsTotal, fps])]));
-if (floatSecondsTotal > 0) this.movetoThread.setEval(eval);
+this.movetoThread.setManager(this, this.vwr,  Clazz.newArray(-1, [dRot, dTrans,  Clazz.newFloatArray(-1, [dZoom, dSlab, secondsTotal, fps])]));
+if (secondsTotal > 0) this.movetoThread.setEval(eval);
 this.movetoThread.run();
 }, "J.api.JmolScriptEvaluator,JU.V3,~N,JU.V3,~N,~N,~N");
 Clazz.defineMethod(c$, "isInPosition", 
@@ -1037,7 +1037,7 @@ this.matrixTest.setAA(this.aaTest1).rotate2(this.ptTest1, this.ptTest3);
 return (this.ptTest3.distance(this.ptTest2) < 0.1);
 }, "JU.V3,~N");
 Clazz.defineMethod(c$, "moveToPyMOL", 
-function(eval, floatSecondsTotal, pymolView){
+function(eval, secondsTotal, pymolView){
 var m3 = JU.M3.newA9(pymolView);
 m3.invert();
 var cameraX = pymolView[9];
@@ -1072,11 +1072,11 @@ this.vwr.setIntProperty("zSlab", Clazz.floatToInt(Math.min(100, slab + fogStart 
 } else {
 this.vwr.setIntProperty("zSlab", Clazz.floatToInt((slab + depth) / 2));
 }this.vwr.setIntProperty("zDepth", depth);
-}}}this.moveTo(eval, floatSecondsTotal, center, null, 0, m3, 100, NaN, NaN, rotationRadius, null, NaN, NaN, NaN, cameraDepth, cameraX, cameraY);
+}}}this.moveTo(eval, secondsTotal, center, null, 0, m3, 100, NaN, NaN, rotationRadius, null, NaN, NaN, NaN, cameraDepth, cameraX, cameraY);
 return true;
 }, "J.api.JmolScriptEvaluator,~N,~A");
 Clazz.defineMethod(c$, "moveTo", 
-function(eval, floatSecondsTotal, center, rotAxis, degrees, matrixEnd, zoom, xTrans, yTrans, newRotationRadius, navCenter, xNav, yNav, navDepth, cameraDepth, cameraX, cameraY){
+function(eval, secondsTotal, center, rotAxis, degrees, matrixEnd, zoom, xTrans, yTrans, newRotationRadius, navCenter, xNav, yNav, navDepth, cameraDepth, cameraX, cameraY){
 if (matrixEnd == null) {
 matrixEnd =  new JU.M3();
 var axis = JU.V3.newV(rotAxis);
@@ -1096,16 +1096,16 @@ if (cameraDepth == this.cameraDepth) cameraDepth = NaN;
 if (!Float.isNaN(cameraX)) xTrans = cameraX * 50 / newRotationRadius / this.width * this.screenPixelCount;
 if (!Float.isNaN(cameraY)) yTrans = cameraY * 50 / newRotationRadius / this.height * this.screenPixelCount;
 var pixelScale = (center == null ? this.scaleDefaultPixelsPerAngstrom : this.defaultScaleToScreen(newRotationRadius));
-if (floatSecondsTotal <= 0) {
+if (secondsTotal <= 0) {
 this.setAll(center, matrixEnd, navCenter, zoom, xTrans, yTrans, newRotationRadius, pixelScale, navDepth, xNav, yNav, cameraDepth, cameraX, cameraY);
-this.vwr.moveUpdate(floatSecondsTotal);
+this.vwr.moveUpdate(secondsTotal);
 this.vwr.finalizeTransformParameters();
 return;
 }try {
 if (this.movetoThread == null) this.movetoThread = J.api.Interface.getOption("thread.MoveToThread", this.vwr, "tm");
-var nSteps = this.movetoThread.setManager(this, this.vwr,  Clazz.newArray(-1, [center, matrixEnd, navCenter,  Clazz.newFloatArray(-1, [floatSecondsTotal, zoom, xTrans, yTrans, newRotationRadius, pixelScale, navDepth, xNav, yNav, cameraDepth, cameraX, cameraY])]));
+var nSteps = this.movetoThread.setManager(this, this.vwr,  Clazz.newArray(-1, [center, matrixEnd, navCenter,  Clazz.newFloatArray(-1, [secondsTotal, zoom, xTrans, yTrans, newRotationRadius, pixelScale, navDepth, xNav, yNav, cameraDepth, cameraX, cameraY])]));
 if (nSteps <= 0 || this.vwr.g.waitForMoveTo) {
-if (nSteps > 0) this.movetoThread.setEval(eval);
+if (nSteps > 0) this.movetoThread.setEval(eval == null ? this.vwr.eval : eval);
 this.movetoThread.run();
 if (!this.vwr.isSingleThreaded) this.movetoThread = null;
 } else {
@@ -1726,4 +1726,4 @@ function(){
 return (this.mode == 1 && this.getNav() ? this.nav.getNavigationState() : "");
 });
 });
-;//5.0.1-v7 Fri Jun 12 11:30:14 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

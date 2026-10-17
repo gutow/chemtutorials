@@ -140,7 +140,7 @@ this.firstAtom = atomMax++;
 addBonds = false;
 break;
 }
-var assemblyIdAtoms = thisBiomolecule.get("asemblyIdAtoms");
+var assemblyIdAtoms = thisBiomolecule.get("assemblyIdAtoms");
 if (filter.indexOf("#<") >= 0) {
 len = Math.min(len, JU.PT.parseInt(filter.substring(filter.indexOf("#<") + 2)) - 1);
 filter = JU.PT.rep(filter, "#<", "_<");
@@ -162,8 +162,10 @@ var notIdentity = !mat.equals(this.mident);
 var chains = (biomtchains == null ? null : biomtchains.get(imt));
 if (chains != null && assemblyIdAtoms != null) {
 bsAtoms =  new JU.BS();
-for (var e, $e = assemblyIdAtoms.entrySet().iterator (); $e.hasNext()&& ((e = $e.next ()) || true);) if (chains.indexOf(":" + e.getKey() + ";") >= 0) bsAtoms.or(e.getValue());
-
+for (var e, $e = assemblyIdAtoms.entrySet().iterator (); $e.hasNext()&& ((e = $e.next ()) || true);) {
+if (chains.indexOf(":" + e.getKey() + ";") >= 0) {
+bsAtoms.or(e.getValue());
+}}
 if (this.asc.bsAtoms != null) bsAtoms.and(this.asc.bsAtoms);
 chains = null;
 }var lastID = -1;
@@ -353,9 +355,9 @@ this.acr.addVibrations = false;
 }return this.symmetry;
 }, "J.adapter.smarter.XtalSymmetry.FileSymmetry");
 Clazz.defineMethod(c$, "finalizeMoments", 
-function(spinFrame, spinFrameExt, htCellTypes){
-this.getFileSymmetry().preSymmetryFinalizeMoments(this.acr, this.asc, spinFrame, spinFrameExt, htCellTypes);
-}, "~S,~S,java.util.Map");
+function(spinFrameExt, htCellTypes){
+this.getFileSymmetry().preSymmetryFinalizeMoments(this.acr, this.asc, spinFrameExt, htCellTypes);
+}, "java.util.Map,java.util.Map");
 Clazz.defineMethod(c$, "setMagneticMoments", 
 function(isCartesian){
 return (this.asc.iSet < 0 || !this.acr.vibsFractional ? 0 : this.getBaseSymmetry().postSymmetrySetMagneticMoments(this.asc, isCartesian));
@@ -1120,10 +1122,10 @@ function(iop, axes, ptTemp, mTemp){
 return (iop == 0 ? axes : this.spaceGroup.symmetryOperations[iop].rotateAxes(axes, this.unitCell, ptTemp, mTemp));
 }, "~N,~A,JU.P3,JU.M3");
 Clazz.defineMethod(c$, "preSymmetryFinalizeMoments", 
-function(acr, asc, spinFrameStr, spinFrameExt, htCellTypes){
-this.spinFrameExt = spinFrameExt;
+function(acr, asc, ext, htCellTypes){
+this.spinFrameExt = ext;
 this.spinFrameToCartXYZ = null;
-var version = this.getSpinExt(spinFrameExt, "version");
+var version = this.getSpinExt(this.spinFrameExt, "version");
 if (version == null) this.doNormalizeSpinFrame = acr.checkFilterKey("SPINNORM");
  else this.doNormalizeSpinFrame = (version.compareTo("0.13.0") < 0);
 System.out.println("doNormalizeSpinFrame=" + this.doNormalizeSpinFrame);
@@ -1131,10 +1133,11 @@ var a = acr.unitCellParams[0];
 var b = acr.unitCellParams[1];
 var c = acr.unitCellParams[2];
 this.spinFrameStr = null;
-if (spinFrameStr != null) {
-this.spinFrameStr = spinFrameStr = this.evaluateSpinFrameStr(acr, spinFrameStr, a, b, c);
-htCellTypes.put("spin", spinFrameStr);
-var spinABC = this.preSymmetrySetSpinFrameMatrices(acr, spinFrameStr);
+if (this.spinFrameExt != null) {
+var spinFrame = this.fixSpinFrameInfo(this.spinFrameExt);
+this.spinFrameStr = this.evaluateSpinFrameStr(acr, spinFrame, a, b, c);
+htCellTypes.put("spin", this.spinFrameStr);
+var spinABC = this.preSymmetrySetSpinFrameMatrices(acr, this.spinFrameStr);
 a = spinABC[1].length();
 b = spinABC[2].length();
 c = spinABC[3].length();
@@ -1148,7 +1151,7 @@ this.spinFrameToCartXYZ.mul2(this.spinFrameRotationMatrix, this.spinFrameToCartX
 this.spinPointGroupAxesXYZ[0].setP(spinABC[1]).scale(1 / a);
 this.spinPointGroupAxesXYZ[1].setP(spinABC[2]).scale(1 / b);
 this.spinPointGroupAxesXYZ[2].setP(spinABC[3]).scale(1 / c);
-System.out.println("XtalSymmetry spinFramePp=\n " + spinFrameStr + "\nrotation=\n " + this.spinFrameRotationMatrix + "\nspinFrameCartXYZ=\n " + this.spinFrameToCartXYZ);
+System.out.println("XtalSymmetry spinFramePp=\n " + this.spinFrameStr + "\nrotation=\n " + this.spinFrameRotationMatrix + "\nspinFrameCartXYZ=\n " + this.spinFrameToCartXYZ);
 if (this.spinFrameRotationMatrix != null) asc.setCurrentModelInfo("spinFrameRotationMatrix", this.spinFrameRotationMatrix);
 asc.setCurrentModelInfo("pointGroupAxes", this.spinPointGroupAxesXYZ);
 }var magneticScaling = JU.P3.new3(1 / a, 1 / b, 1 / c);
@@ -1159,13 +1162,47 @@ var v = asc.atoms[i].vib;
 if (v != null) {
 v.scaleT(magneticScaling);
 if (v.isFractional) {
-if (v.magMoment == 0) {
+if (acr.modDim == 0 && v.length() == 0) {
+asc.atoms[i].vib = null;
+continue;
+}if (v.magMoment == 0) {
 if (this.unitCell == null) {
 this.setUnitCellFromParams(acr.unitCellParams, false, acr.cellSlop);
 }this.toCartesian(vt.setP(v), true);
 v.magMoment = vt.length();
 }}}}
-}, "J.adapter.smarter.AtomSetCollectionReader,J.adapter.smarter.AtomSetCollection,~S,~S,java.util.Map");
+}, "J.adapter.smarter.AtomSetCollectionReader,J.adapter.smarter.AtomSetCollection,java.util.Map,java.util.Map");
+Clazz.defineMethod(c$, "fixSpinFrameInfo", 
+function(spinFrameExt){
+var bs =  new JU.BS();
+var errMsg = "";
+for (var i = 0; i < 4; i++) {
+if (spinFrameExt.containsKey(J.adapter.smarter.XtalSymmetry.FileSymmetry.transformTags[i])) bs.set(i);
+}
+if (bs.cardinality() > 1) {
+bs.clearBits(0, bs.length() - 1);
+}for (var i = 0; i < 4; i++) {
+if (!bs.get(i)) {
+var s = spinFrameExt.remove(J.adapter.smarter.XtalSymmetry.FileSymmetry.transformTags[i]);
+if (s != null) errMsg += "Redundant spin transform removed: " + J.adapter.smarter.XtalSymmetry.FileSymmetry.transformTags[i] + "\n";
+}}
+var t = Math.max(0, bs.nextSetBit(0));
+var spinFrame = spinFrameExt.get(J.adapter.smarter.XtalSymmetry.FileSymmetry.transformTags[t]);
+if (spinFrame == null) {
+t = 3;
+spinFrame = "a,b,c";
+} else if (spinFrameExt.containsKey("ignoreForCollinear")) {
+errMsg = "Structure is collinear, but spinFrame is present. Spin frame " + spinFrame + " ignored; using 'a,b,c'\n";
+t = 3;
+spinFrame = "a,b,c";
+} else if (spinFrameExt.containsKey("flagForCollinear") && !spinFrame.equals("a,b,c")) {
+errMsg = "Structure is collinear, but spinFrame is present. Collinear nature ignored. Spin frame " + spinFrame + " is being used\n";
+}spinFrame = J.adapter.smarter.XtalSymmetry.FileSymmetry.transformTags[t] + ":" + spinFrame;
+System.out.println("XtalSymmetry using " + spinFrame);
+if (errMsg.length > 0) System.err.print(errMsg);
+spinFrame = spinFrame.substring(spinFrame.lastIndexOf("_", spinFrame.indexOf(':')) + 1);
+return spinFrame;
+}, "java.util.Map");
 Clazz.defineMethod(c$, "evaluateSpinFrameStr", 
 function(acr, s, a, b, c){
 var pt = s.indexOf(":");
@@ -1275,11 +1312,8 @@ return a;
 }, "~S");
 Clazz.defineMethod(c$, "getSpinExt", 
 function(spinFrameExt, name){
-if (spinFrameExt == null) return null;
-name = ";" + name + "=";
-var pt = spinFrameExt.indexOf(name);
-return (pt < 0 ? null : spinFrameExt.substring(pt + name.length, spinFrameExt.indexOf(';', pt + 1)));
-}, "~S,~S");
+return (spinFrameExt == null ? null : spinFrameExt.get(name));
+}, "java.util.Map,~S");
 Clazz.defineMethod(c$, "postSymmetrySetMagneticMoments", 
 function(asc, isCartesian){
 if (this.nSpins > 0) return this.nSpins;
@@ -1305,6 +1339,7 @@ v1 = null;
 }}}
 return this.nSpins;
 }, "J.adapter.smarter.AtomSetCollection,~B");
+c$.transformTags =  Clazz.newArray(-1, ["spinframe_orientation_hex", "spinframe_orientation_cartn", "transform_spinframe_p_matrix", "transform_spinframe_p_abc"]);
 /*eoif3*/})();
 });
-;//5.0.1-v7 Fri Jun 12 11:30:14 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

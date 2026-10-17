@@ -315,6 +315,7 @@ var colixes = data[0];
 var atomMap = null;
 var atrans = data[1];
 var ctrans = (atrans == null ? null :  Clazz.newShortArray (atrans.length, 0));
+var haveTransparentVertices = false;
 if (colixes != null) {
 for (var i = 0; i < colixes.length; i++) {
 var colix = colixes[i];
@@ -322,12 +323,14 @@ colixes[i] = colix;
 var f = (atrans == null ? 0 : atrans[i]);
 if (f > 0.01) {
 ctrans[i] = JU.C.getColixTranslucent3(colix, true, f);
+haveTransparentVertices = true;
 }}
 atomMap =  Clazz.newIntArray (bs.length(), 0);
 for (var pt = 0, i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i + 1), pt++) atomMap[i] = pt;
 
 }this.jvxlData.vertexColors =  Clazz.newIntArray (this.vc, 0);
 this.jvxlData.nVertexColors = this.vc;
+this.colorEncoder = null;
 var atoms = vwr.ms.at;
 var gdata = vwr.gdata;
 var isTranslucent = JU.C.isTransparent(this.colix);
@@ -343,6 +346,7 @@ if (isTranslucent) this.vcs[i] = JU.C.copyColixTranslucency(this.colix, colix);
  else this.vcs[i] = JU.C.copyColixTranslucency(trans, colix);
 }
 this.setPymolColors();
+return haveTransparentVertices;
 }, "JV.Viewer,~A,JU.BS");
 Clazz.defineMethod(c$, "setPymolColors", 
 function(){
@@ -462,8 +466,8 @@ var translucencyLevel = (this.jvxlData.translucency == 0 ? NaN : this.jvxlData.t
 if (this.jvxlData.meshColor != null) this.meshColix = JU.C.getColixS(this.jvxlData.meshColor);
 this.setJvxlDataRendering();
 this.isColorSolid = !this.jvxlData.isBicolorMap && this.jvxlData.vertexColors == null && this.jvxlData.vertexColorMap == null;
-if (this.colorEncoder == null && ("inherit".equals(this.jvxlData.colorScheme) || this.jvxlData.vertexColorMap == null)) return false;
 if (this.jvxlData.vertexColorMap == null) {
+if (this.colorEncoder == null && ("inherit".equals(this.jvxlData.colorScheme) || this.jvxlData.vertexColorMap == null)) return false;
 if (this.jvxlData.colorScheme != null) {
 var colorScheme = this.jvxlData.colorScheme;
 var isTranslucent = colorScheme.startsWith("translucent ");
@@ -476,7 +480,8 @@ this.remapColors(null, null, translucencyLevel);
 if (this.jvxlData.baseColor != null) {
 for (var i = this.vc; --i >= 0; ) this.vcs[i] = this.colix;
 
-}for (var entry, $entry = this.jvxlData.vertexColorMap.entrySet().iterator (); $entry.hasNext()&& ((entry = $entry.next ()) || true);) {
+}System.out.println("mapping color from PyMOL vertex colors");
+for (var entry, $entry = this.jvxlData.vertexColorMap.entrySet().iterator (); $entry.hasNext()&& ((entry = $entry.next ()) || true);) {
 var bsMap = entry.getValue();
 var key = entry.getKey();
 var pt = key.indexOf(" translucent");
@@ -799,5 +804,9 @@ this.jvxlData.colorDensity = false;
 this.isColorSolid = false;
 this.remapColors(this.vwr, null, translucentLevel);
 }, "~N,~N,~N");
+Clazz.defineMethod(c$, "getDataName", 
+function(){
+return "isosurface_" + this.thisID + ".jvxl";
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+});
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026

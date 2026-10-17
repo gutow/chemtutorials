@@ -71,11 +71,11 @@ function(timeSeconds, isAll){
 if (isAll) {
 this.vwr.setBooleanProperty("windowCentered", this.windowCenteredFlag);
 this.vwr.setBooleanProperty("navigationMode", this.navigationMode);
-if (this.pymolView == null) this.vwr.moveTo(this.vwr.eval, timeSeconds, this.center, null, NaN, this.rotationMatrix, this.zoom, this.xTrans, this.yTrans, this.rotationRadius, this.navCenter, this.xNav, this.yNav, this.navDepth, this.cameraDepth, this.cameraX, this.cameraY);
+if (this.pymolView == null) this.vwr.moveTo(null, timeSeconds, this.center, null, NaN, this.rotationMatrix, this.zoom, this.xTrans, this.yTrans, this.rotationRadius, this.navCenter, this.xNav, this.yNav, this.navDepth, this.cameraDepth, this.cameraX, this.cameraY);
  else this.vwr.tm.moveToPyMOL(this.vwr.eval, timeSeconds, this.pymolView);
 } else {
 this.vwr.tm.setRotation(this.rotationMatrix);
 }return true;
 }, "~N,~B");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026

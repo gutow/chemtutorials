@@ -23,6 +23,7 @@ this.isWithinNot = false;
 this.withinPoints = null;
 this.cutoffRange = null;
 this.allowMesh = true;
+this.haveCached = false;
 this.script = null;
 this.iHaveModelIndex = false;
 this.nLCAO = 0;
@@ -80,21 +81,10 @@ this.setPropI("thisID", mesh0.thisID, null);
 }return;
 }if ("cache" === propertyName) {
 if (this.currentMesh == null) return;
-var imodel = this.currentMesh.modelIndex;
-var id = this.currentMesh.thisID;
-var fname = "cache://isosurface_" + id;
-var jvxl = (this.getPropI("jvxlDataXml", -1));
-this.vwr.cachePut(fname, jvxl.getBytes());
-this.deleteMeshI(this.currentMesh.index);
-this.setPropI("init", null, null);
-this.setPropI("thisID", id, null);
-this.setPropI("modelIndex", Integer.$valueOf(imodel), null);
-this.setPropI("fileName", fname, null);
-this.setPropI("readFile", null, null);
-this.setPropI("finalize", "isosurface ID " + JU.PT.esc(id) + (imodel >= 0 ? " modelIndex " + imodel : "") + " /*file*/" + JU.PT.esc(fname), null);
-this.setPropI("clear", null, null);
+this.cacheIsosurface();
 return;
 }if ("delete" === propertyName) {
+if (this.thisMesh != null && this.haveCached) this.vwr.cachePut("cache://" + this.thisMesh.getDataName(), null);
 this.setPropertySuper(propertyName, value, bs);
 if (!this.explicitID) this.nLCAO = this.nUnnamed = 0;
 this.currentMesh = this.thisMesh = null;
@@ -114,7 +104,8 @@ return;
 }if ("pymolparams" === propertyName) {
 if (this.thisMesh != null) {
 this.ensureMeshSource();
-this.thisMesh.setPymolVertexColixesForAtoms(this.vwr, value, bs);
+var needToCache = this.thisMesh.setPymolVertexColixesForAtoms(this.vwr, value, bs);
+if (needToCache) this.cacheIsosurface();
 }return;
 }if ("atomcolor" === propertyName) {
 if (this.thisMesh != null) {
@@ -409,6 +400,24 @@ if (m.atomIndex >= firstAtomDeleted) m.atomIndex -= nAtomsDeleted;
 return;
 }this.setPropertySuper(propertyName, value, bs);
 }, "~S,~O,JU.BS");
+Clazz.defineMethod(c$, "cacheIsosurface", 
+function(){
+this.haveCached = true;
+var imodel = this.currentMesh.modelIndex;
+var id = this.currentMesh.thisID;
+var jvxl = (this.getPropI("jvxlDataXml", -1));
+var cacheName = this.thisMesh.getDataName();
+var fname = "cache://" + cacheName;
+this.vwr.cachePut(fname, jvxl.getBytes());
+this.deleteMeshI(this.currentMesh.index);
+this.setPropI("init", null, null);
+this.setPropI("thisID", id, null);
+this.setPropI("modelIndex", Integer.$valueOf(imodel), null);
+this.setPropI("fileName", fname, null);
+this.setPropI("readFile", null, null);
+this.setPropI("finalize", "isosurface ID " + JU.PT.esc(id) + (imodel >= 0 ? " modelIndex " + imodel : "") + " /*file*/" + JU.PT.esc(fname), null);
+this.setPropI("clear", null, null);
+});
 Clazz.defineMethod(c$, "getFileReader", 
 function(fileName){
 var value = this.vwr.fm.getBufferedReaderOrErrorMessageFromName(fileName, null, true, true);
@@ -667,15 +676,21 @@ var pt = cmd.indexOf("; #");
 if (pt >= 0) cmd = cmd.substring(0, pt);
 if (imesh.connectedAtoms != null) cmd += " connect " + JU.Escape.eAI(imesh.connectedAtoms);
 cmd = JU.PT.trim(cmd, ";");
+var writeJVXL = false;
 if (cmd.indexOf("cache://") >= 0) {
-var id = imesh.thisID;
-var jvxlID = "isosurface_" + id;
-var fname = "cache://isosurface_" + id;
-var o = this.vwr.fm.cacheGet(fname, false);
+var dataName = imesh.getDataName();
+var cacheName = "cache://" + dataName;
+var old = "/*file*/" + JU.PT.esc(cacheName);
+pt = cmd.indexOf(old);
+if (pt < 0) {
+System.err.println("Isosurface no cache string found in command " + old);
+} else {
+var o = this.vwr.fm.cacheGet(cacheName, false);
 if (JU.AU.isAB(o)) o =  String.instantialize(o);
-var jvxl = " data " + JU.PT.esc(jvxlID) + o + "end " + JU.PT.esc(jvxlID);
-cmd = JU.PT.rep(cmd, "/*file*/" + JU.PT.esc(fname), jvxl);
-}if (imesh.linkedMesh != null) cmd += " LINK";
+var jvxl = " data " + JU.PT.esc(dataName) + o + "end " + JU.PT.esc(dataName);
+cmd = cmd.substring(0, pt) + jvxl + cmd.substring(pt + old.length);
+writeJVXL = true;
+}}if (imesh.linkedMesh != null) cmd += " LINK";
 if (this.myType === "lcaoCartoon" && imesh.atomIndex >= 0) cmd += " ATOMINDEX " + imesh.atomIndex;
 J.shape.Shape.appendCmd(sb, cmd);
 var id = this.myType + " ID " + JU.PT.esc(imesh.thisID);
@@ -688,7 +703,7 @@ if (imesh.slabOptions != null) J.shape.Shape.appendCmd(sb, imesh.slabOptions.toS
 if (cmd.charAt(0) != '#') {
 if (this.allowMesh) J.shape.Shape.appendCmd(sb, imesh.getState(this.myType));
 if (!imesh.isColorSolid && imesh.colorType == 0 && JU.C.isColixTranslucent(imesh.colix)) J.shape.Shape.appendCmd(sb, "color " + this.myType + " " + J.shape.Shape.getTranslucentLabel(imesh.colix));
-if (imesh.colorCommand != null && imesh.colorType == 0 && !imesh.colorCommand.equals("#inherit;")) {
+if (!writeJVXL && imesh.colorCommand != null && imesh.colorType == 0 && !imesh.colorCommand.equals("#inherit;")) {
 J.shape.Shape.appendCmd(sb, imesh.colorCommand);
 }var colorArrayed = (imesh.isColorSolid && imesh.pcs != null);
 if (imesh.isColorSolid && imesh.colorType == 0 && !imesh.colorsExplicit && !colorArrayed) {
@@ -1019,7 +1034,7 @@ this.setBsVdw();
 this.thisMesh.isColorSolid = false;
 this.thisMesh.colorDensity = this.jvxlData.colorDensity;
 this.thisMesh.volumeRenderPointSize = this.jvxlData.pointSize;
-this.thisMesh.colorEncoder = this.sg.params.colorEncoder;
+this.thisMesh.colorEncoder = (this.jvxlData.vertexColorMap == null ? this.sg.params.colorEncoder : null);
 this.thisMesh.getContours();
 if (this.thisMesh.jvxlData.nContours != 0 && this.thisMesh.jvxlData.nContours != -1) this.explicitContours = true;
 if (this.explicitContours && this.thisMesh.jvxlData.jvxlPlane != null) this.thisMesh.havePlanarContours = true;
@@ -1257,4 +1272,4 @@ function(mesh){
 return (mesh == null ? null : (mesh).getValidVertices(null));
 }, "J.shape.Mesh");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

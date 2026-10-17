@@ -798,4 +798,4 @@ b1.connect(a1, a2);
 };
 Clazz.declareInterface(J.adapter.readers.xml.CDXMLParser, "CDXReaderI");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

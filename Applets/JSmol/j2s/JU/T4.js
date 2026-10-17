@@ -27,11 +27,11 @@ return (this.x == t.x && this.y == t.y && this.z == t.z && this.w == t.w);
 }, "~O");
 Clazz.overrideMethod(c$, "toString", 
 function(){
-return "(" + this.x + ", " + this.y + ", " + this.z + ", " + this.w + ")";
+return "{" + this.x + ", " + this.y + ", " + this.z + ", " + this.w + "}";
 });
 Clazz.overrideMethod(c$, "toJSON", 
 function(){
 return "[" + this.x + ", " + this.y + ", " + this.z + ", " + this.w + "]";
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026

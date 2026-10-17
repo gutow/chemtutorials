@@ -6,6 +6,10 @@ this.cacheName = null;
 this.key = null;
 Clazz.instantialize(this, arguments);}, JS, "FileLoadThread", J.thread.JmolThread);
 Clazz.makeConstructor(c$, 
+function(){
+Clazz.superConstructor (this, JS.FileLoadThread, []);
+});
+Clazz.defineMethod(c$, "initialize", 
 function(eval, vwr, fileName, key, cacheName){
 this.setViewer(vwr, "FileLoadThread");
 this.fileName = fileName;
@@ -13,6 +17,7 @@ this.key = key;
 this.cacheName = cacheName;
 this.setEval(eval);
 this.sc.pc--;
+return this;
 }, "J.api.JmolScriptEvaluator,JV.Viewer,~S,~S,~S");
 Clazz.overrideMethod(c$, "run1", 
 function(mode){
@@ -47,4 +52,4 @@ this.vwr.cachePut(this.vwr.fm.getFilePath(fileName, true, false), data);
 }this.run1(-2);
 }, "~S,~S,~O,~O");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

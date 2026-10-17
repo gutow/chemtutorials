@@ -68,4 +68,4 @@ c$.idSpherical =  Clazz.newIntArray(-1, [0, 1, 2, 3, 3, 5, 5, 7, 7, 9, 9, 11, 11
 c$.tags =  Clazz.newArray(-1, ["S", "P", "SP", "5D", "D", "7F", "F", "9G", "G", "11H", "H", "13I", "I"]);
 c$.tags2 =  Clazz.newArray(-1, ["S", "X", "SP", "5D", "XX", "7F", "XXX", "9G", "XXXX", "11H", "XXXXX", "13I", "XXXXXX"]);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026

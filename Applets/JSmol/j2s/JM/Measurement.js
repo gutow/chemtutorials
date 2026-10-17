@@ -480,4 +480,4 @@ if (md.colix != 0) this.labelColix = this.text.colix = md.text.colix;
 }}this.formatMeasurement(null);
 }, "JM.MeasurementData,~B");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

@@ -7,3 +7,6 @@
 [submodule "Lewis_Tutorial"]
 	path = Lewis_Tutorial
 	url = https://github.com/gutow/Lewis_Tutorial.git
+[submodule "VSEPR_TUTORIAL"]
+	path = VSEPR_TUTORIAL
+	url = https://github.com/gutow/VSEPR_tutorial.git

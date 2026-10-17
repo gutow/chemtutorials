@@ -1,5 +1,5 @@
 Clazz.declarePackage("J.jvxl.readers");
-Clazz.load(["JU.P3", "$.V3"], "J.jvxl.readers.SurfaceGenerator", ["JU.AU", "$.BS", "$.Measure", "$.P4", "$.PT", "$.Rdr", "$.SB", "J.jvxl.data.JvxlCoder", "$.JvxlData", "$.MeshData", "$.VolumeData", "J.jvxl.readers.Parameters", "$.SurfaceReader", "JU.Logger", "JV.FileManager"], function(){
+Clazz.load(["JU.P3", "$.V3"], "J.jvxl.readers.SurfaceGenerator", ["JU.AU", "$.BS", "$.Base64", "$.Measure", "$.P4", "$.PT", "$.Rdr", "$.SB", "J.jvxl.data.JvxlCoder", "$.JvxlData", "$.MeshData", "$.VolumeData", "J.jvxl.readers.Parameters", "$.SurfaceReader", "JU.Logger", "JV.FileManager"], function(){
 var c$ = Clazz.decorateAsClass(function(){
 this.params = null;
 this.jvxlData = null;
@@ -691,8 +691,18 @@ return this.newReader("VolumeDataReader");
 }var data = null;
 if ((typeof(value)=='string')) {
 data = value;
+if (data.startsWith(";base64,")) {
+try {
+value =  new JU.Rdr.StreamReader(JU.Rdr.getBIS(JU.Base64.decodeBase64(data)), null);
+} catch (e) {
+if (Clazz.exceptionOf(e, Exception)){
+} else {
+throw e;
+}
+}
+} else {
 value = JU.Rdr.getBR(value);
-}if (Clazz.instanceOf(value,Array)) {
+}}if (Clazz.instanceOf(value,Array)) {
 var a = (value)[0];
 var b =  new Array(a.length);
 for (var i = 0; i < a.length; i++) {
@@ -862,4 +872,4 @@ function(){
 return (this.surfaceReader.volumeData == null ? null : this.surfaceReader.volumeData.oabc);
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

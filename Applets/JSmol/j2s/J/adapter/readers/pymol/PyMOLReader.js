@@ -3,9 +3,10 @@ Clazz.load(["J.adapter.readers.pdb.PdbReader", "JU.BS", "$.P3"], "J.adapter.read
 var c$ = Clazz.decorateAsClass(function(){
 this.allowSurface = true;
 this.doResize = false;
-this.doCache = false;
 this.isStateScript = false;
-this.sourcePNGJ = false;
+this.doCache = true;
+this.optimizePSE = true;
+this.ignoreObjects = false;
 this.ac0 = 0;
 this.$ac = 0;
 this.stateCount = 0;
@@ -68,13 +69,15 @@ this.asc.setInfo("noAutoBond", Boolean.TRUE);
 this.asc.setCurrentModelInfo("pdbNoHydrogens", Boolean.TRUE);
 if (this.isTrajectory) this.trajectorySteps =  new JU.Lst();
 this.isStateScript = this.htParams.containsKey("isStateScript");
-this.sourcePNGJ = this.htParams.containsKey("sourcePNGJ");
+var sourcePNGJ = this.htParams.containsKey("sourcePNGJ");
 this.doResize = this.checkFilterKey("DORESIZE");
 this.allowSurface = !this.checkFilterKey("NOSURFACE");
-this.doCache = this.checkFilterKey("DOCACHE");
-if (this.doCache && this.sourcePNGJ) this.doCache = false;
- else if (this.sourcePNGJ && !this.doCache) this.sourcePNGJ = false;
-if (this.doCache) this.bsBytesExcluded =  new JU.BS();
+this.doCache = !this.checkFilterKey("NOCACHE");
+this.optimizePSE = !this.checkFilterKey("NOOPTIMIZEPSE");
+if (sourcePNGJ && this.doCache) {
+this.ignoreObjects = true;
+}if (this.optimizePSE) this.bsBytesExcluded =  new JU.BS();
+System.out.println("PyMOLReader doResize=" + this.doResize + " doCache=" + this.doCache + " optimizePSE=" + this.optimizePSE + "\n  use FILTER 'DORESIZE' or 'NOCACHE' or 'NOOPTIMIZEPSE' to change these settings");
 Clazz.superCall(this, J.adapter.readers.pymol.PyMOLReader, "initializeReader", []);
 });
 Clazz.overrideMethod(c$, "processBinaryDocument", 
@@ -115,6 +118,7 @@ var bytes0 = this.vwr.fm.getFileAsBytes(this.filePath, null);
 var bytes =  Clazz.newByteArray (bytes0.length - nExcluded, 0);
 for (var i = this.bsBytesExcluded.nextClearBit(0), n = bytes0.length, pt = 0; i < n; i = this.bsBytesExcluded.nextClearBit(i + 1)) bytes[pt++] = bytes0[i];
 
+System.out.println("PyMOLReader caching " + bytes.length + " of " + bytes0.length + " bytes for " + this.fileName);
 bytes0 = null;
 var fileName = this.filePath;
 this.vwr.cachePut(fileName, bytes);
@@ -420,7 +424,7 @@ var parentGroupName = (execObject.size() < 8 ? null : J.adapter.readers.pymol.Py
 if (parentGroupName != null && "".equals(parentGroupName.trim())) parentGroupName = null;
 this.pymolScene.setReaderObjectInfo(this.objectName, type, parentGroupName, this.isHidden, J.adapter.readers.pymol.PyMOLReader.listAt(objectHeader, 8), stateSettings, (moleculeOnly ? "_" + (iState + 1) : ""));
 var bsAtoms = null;
-var doExclude = (this.bsBytesExcluded != null);
+var pruneCachedPymolFile = (this.bsBytesExcluded != null);
 var msg = null;
 switch (type) {
 default:
@@ -430,11 +434,11 @@ case -1:
 this.pymolScene.processSelection(execObject);
 break;
 case 1:
-doExclude = false;
+pruneCachedPymolFile = false;
 bsAtoms = this.processMolecule(pymolObject, iState);
 break;
 case 4:
-doExclude = false;
+pruneCachedPymolFile = false;
 this.processMeasure(pymolObject);
 break;
 case 3:
@@ -448,6 +452,7 @@ case 12:
 if (parentGroupName == null) parentGroupName = "";
 break;
 case 6:
+pruneCachedPymolFile = false;
 this.processCGO(pymolObject);
 break;
 case 11:
@@ -467,11 +472,11 @@ msg = "SURFACE";
 break;
 }
 if (parentGroupName != null || bsAtoms != null) this.pymolScene.addGroup(execObject, parentGroupName, type, bsAtoms);
-if (doExclude) {
+if (pruneCachedPymolFile) {
 var i0 = J.adapter.readers.pymol.PyMOLReader.intAt(startLen, 0);
 var len = J.adapter.readers.pymol.PyMOLReader.intAt(startLen, 1);
 this.bsBytesExcluded.setBits(i0, i0 + len);
-JU.Logger.info("cached PSE file excludes PyMOL object type " + type + " name=" + this.objectName + " len=" + len);
+JU.Logger.info("cached PSE file excludes PyMOL object type " + type + " name=" + this.objectName + " at " + i0 + " len=" + len);
 }if (msg != null) JU.Logger.error("Unprocessed object type " + msg + " " + this.objectName);
 return 0;
 }, "JU.Lst,~B,~N,~B");
@@ -490,7 +495,7 @@ if (this.objectName.endsWith("_e_pot")) this.processMap(pymolObject, true, true)
 Clazz.defineMethod(c$, "processMap", 
 function(pymolObject, isObject, isGadget){
 if (isObject) {
-if (this.sourcePNGJ) return;
+if (this.ignoreObjects) return;
 if (this.isHidden && !isGadget) return;
 if (this.mapObjects == null) this.mapObjects =  new JU.Lst();
 this.mapObjects.addLast(pymolObject);
@@ -1148,4 +1153,4 @@ return this.atoms[iPrev].chainID != this.atoms[i].chainID;
 }, "~N,~N");
 c$.nucleic = " A C G T U ADE THY CYT GUA URI DA DC DG DT DU ";
 });
-;//5.0.1-v7 Fri Jun 12 11:18:14 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

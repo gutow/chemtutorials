@@ -47,7 +47,7 @@ if (!this.isDataSpin && isUnitCell && (unitcell == null || this.modelIndex < 0))
 this.imageFontScaling = this.vwr.imageFontScaling;
 if (!this.isDataSpin && this.vwr.areAxesTainted()) axes.reinitShape();
 this.font3d = this.vwr.gdata.getFont3DScaled(axes.font3d, this.imageFontScaling);
-isUnitCell = isUnitCell && (unitcell != null && this.ms.unitCells != null);
+isUnitCell = isUnitCell && (unitcell != null);
 var axisType = (isUnitCell ? axes.axisType : null);
 var isabcxyz = (isXY && isUnitCell && axes.axes2 != null);
 this.isPolymer = isUnitCell && unitcell.isPolymer();
@@ -215,4 +215,4 @@ var yStrBaseline = Math.floor(y + strAscent / 2);
 this.g3d.drawString(str, this.font3d, Clazz.doubleToInt(xStrBaseline), Clazz.doubleToInt(yStrBaseline), Clazz.floatToInt(z), Clazz.floatToInt(z), 0);
 }, "~S,~N,~N,~N,~N,~N");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

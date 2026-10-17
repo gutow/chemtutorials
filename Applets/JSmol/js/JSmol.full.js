@@ -11014,6 +11014,8 @@ return jQuery;
 
 // see JSmolApi.js for public user-interface. All these are private functions
 
+// BH 2026.08.23 www.rruff.net added to AJAX-enabled list
+// BH 2026.07.09 adds prompt("testing","one|two|three",true) html dialog option
 // BH 2026.02.05 fixes issue allowing only one Jmol/JSV pair per page
 // BH 2025.09.04 enables contentType application/json in getFileData
 // BH 2024.02.20 fixes dragging should not stop when mouse leaves applet
@@ -11230,15 +11232,16 @@ Jmol = (function(document) {
 				// these sites are known to implement access-control-allow-origin *
         // null here means no conversion necessary 
 				"cactus.nci.nih.gov": null,
-        ".x3dna.org": null,
-        "rruff.geo.arizona.edu": null, 
-        ".rcsb.org": null, 
+		        ".x3dna.org": null,
+				"www.rruff.net": null,
+		        ".rcsb.org": null, 
         		"chemapps.stolaf.edu/jmol/jsmol/": null,
         		"zakodium.com":null,
 				"ftp.wwpdb.org": null,
 				"pdbe.org": null, 
 				"materialsproject.org": null, 
 				".ebi.ac.uk": null, 
+				"raw.github": null, 
 				"pubchem.ncbi.nlm.nih.gov":null,
 				"www.nmrdb.org/tools/jmol/predict.php":null,
 				"$": "https://cactus.nci.nih.gov/chemical/structure/%FILENCI/file?format=sdf&get3d=True",
@@ -11723,8 +11726,8 @@ Jmol = (function(document) {
 			} else {
 				query = encodeURIComponent(query.substring(pt));		
 			}
-      if (query.indexOf(".mmtf") >= 0) {
-        query = "https://mmtf.rcsb.org/v1.0/full/" + query.replace(/\.mmtf/, "");
+			if (query.indexOf(".mmtf") >= 0) {
+				query = "https://mmtf.rcsb.org/v1.0/full/" + query.replace(/\.mmtf/, "");
 			} else if (call.indexOf("FILENCI") >= 0) {
 				query = query.replace(/\%2F/g, "/");				
 				query = call.replace(/\%FILENCI/, query);
@@ -12019,16 +12022,20 @@ Jmol = (function(document) {
 		if (fileName.indexOf("file:/") == 0 && fileName.indexOf("file:///") != 0)
 			fileName = "file://" + fileName.substring(5);      /// fixes IE problem
 		var isMyHost = (fileName.indexOf("://") < 0 || fileName.indexOf(document.location.protocol) == 0 && fileName.indexOf(document.location.host) >= 0);
-    var isHttps2Http = (Jmol._httpProto == "https://" && fileName.indexOf("http://") == 0);
-		var isDirectCall = Jmol._isDirectCall(fileName);
-    if (fileName.indexOf("?ALLOWSORIGIN?") >= 0) {
+	    var isHttps2Http = (Jmol._httpProto == "https://" && fileName.indexOf("http://") == 0);
+			var isDirectCall = Jmol._isDirectCall(fileName);
+	    if (fileName.indexOf("?ALLOWSORIGIN?") >= 0) {
 			fileName = fileName.replace(/\?ALLOWSORIGIN\?/,"");
     }
 		//if (fileName.indexOf("http://pubchem.ncbi.nlm.nih.gov/") == 0)isDirectCall = false;
 
 		var cantDoSynchronousLoad = (!isMyHost && Jmol.$supportsIECrossDomainScripting());
 		var data = null;
-		if (isHttps2Http || asBase64 || !isMyHost && !isDirectCall || !fSuccess && cantDoSynchronousLoad ) {
+		if (
+				isHttps2Http 
+				|| asBase64 
+				|| !isMyHost && !isDirectCall 
+				|| !fSuccess && cantDoSynchronousLoad ) {
 				data = Jmol._getRawDataFromServer("_",fileName, fSuccess, fSuccess, asBase64, true);
 		} else {
 			fileName = fileName.replace(/file:\/\/\/\//, "file://"); // opera
@@ -12073,12 +12080,14 @@ Jmol = (function(document) {
 	}
 
 	Jmol._isDirectCall = function(url) {
-    if (url.indexOf("?ALLOWSORIGIN?") >= 0)
-      return true;
+		if (url.indexOf("?ALLOWSORIGIN?") >= 0)
+			return true;
 		for (var key in Jmol.db._DirectDatabaseCalls) {
 			if (key.indexOf(".") >= 0 && url.indexOf(key) >= 0)
 				return true;
 		}
+//		return true;
+// uncomment the line above to not allow indirect calls through jsmol.php
 		return false;
 	}
 
@@ -12121,7 +12130,38 @@ Jmol = (function(document) {
     Jmol.loadFileAsynchronously(null, applet, null, null);
   }
   
-	Jmol.loadFileAsynchronously = function(fileLoadThread, applet, fileName, appData) {
+// Note: You can change Jmol.dialogHTML to read anything you want prior to running Jmol.promptAsynchonrously().
+// Or, if you prefer to work with the dialog element itself, run Jmol.promptAsynchronously() with no parameters to only create but not display the object.
+// Then you can adjust that to your liking.
+
+  Jmol.promptDialog = null;
+  Jmol.dialogHTML = '<dialog id="Jmol.dialogDiv"><div id="Jmol.dialogMsgDiv" style="margin-bottom:1em;white-space:pre"></div><form method="dialog" id="Jmol.dialogBtns"></form></dialog>';
+  Jmol.promptAsynchronously = function(dialogThread, applet, msg, btns) {
+	if (!Jmol.promptDialog) {
+	      Jmol.$after("body", Jmol.dialogHTML);
+		Jmol.promptDialog = document.getElementById("Jmol.dialogDiv");
+	}
+	if (!dialogThread)return;
+	Jmol.promptDialog.returnValue = null;
+	Jmol.promptDialog.addEventListener("close", function closeMe() {
+		Jmol.promptDialog.removeEventListener("close", closeMe);
+		var v = Jmol.promptDialog.returnValue;
+		dialogThread.setData(v == "null" ? null : v);
+	});
+	document.getElementById("Jmol.dialogMsgDiv").textContent = msg;
+	var btnDiv = document.getElementById("Jmol.dialogBtns");
+	btnDiv.innerHTML = "";
+	for (var i = 0; i < btns.length; i++) {
+		var btn = document.createElement("button");
+		btn.setAttribute("value", btns[i]);
+		btn.textContent = btns[i];
+		btn.style.margin="0 1em";
+		btnDiv.appendChild(btn);
+	}
+	Jmol.promptDialog.showModal();
+  }
+
+  Jmol.loadFileAsynchronously = function(fileLoadThread, applet, fileName, appData) {
 		if (fileName && fileName.indexOf("?") != 0) {
 			// LOAD ASYNC command
 			var fileName0 = fileName;
@@ -12134,9 +12174,9 @@ Jmol = (function(document) {
 		}
 		// we actually cannot suggest a fileName, I believe.
 		if (!Jmol.featureDetection.hasFileReader) {
-        var msg = "Local file reading is not enabled in your browser";
-				return (fileLoadThread ? fileLoadThread.setData(msg, null, null, appData, applet) : alert(msg));
-    }
+        		var msg = "Local file reading is not enabled in your browser";
+			return (fileLoadThread ? fileLoadThread.setData(msg, null, null, appData, applet) : alert(msg));
+    		}
 		if (!applet._localReader) {
 			var div = '<div id="ID" style="z-index:'+Jmol._getZ(applet, "fileOpener") + ';position:absolute;background:#E0E0E0;left:10px;top:10px"><div style="margin:5px 5px 5px 5px;"><button id="ID_loadurl">URL</button><input type="file" id="ID_files" /><button id="ID_loadfile">load</button><button id="ID_cancel">cancel</button></div><div>'
 			Jmol.$after("#" + applet._id + "_appletdiv", div.replace(/ID/g, applet._id + "_localReader"));
@@ -12173,7 +12213,7 @@ Jmol = (function(document) {
 		});
 		Jmol.$setVisible(applet._localReader, true);
     applet._readingLocal = true;
-	}
+  }
 
   Jmol._setData = function(fileLoadThread, filename, filename0, data, appData, applet) {
   	data && (data = Jmol._strToBytes(data));
@@ -12215,11 +12255,11 @@ Jmol = (function(document) {
 			: filename.indexOf(".jpg") >= 0 ? "image/jpg" : ""));
 		var isString = (typeof data == "string");
 		
-	if (isString && data.indexOf(";base64,") >= 0) {
-	  data = data.split(";base64,")[1];
-	} else {	
-   	data = (JU || J.util).Base64.getBase64(isString ? data.getBytes("UTF-8") : data).toString();
-   	}
+		if (isString && data.indexOf(";base64,") >= 0) {
+		  data = data.split(";base64,")[1];
+		} else {	
+	   	data = (JU || J.util).Base64.getBase64(isString ? data.getBytes("UTF-8") : data).toString();
+	   	}
 		encoding || (encoding = "base64");
 		
 		var url = Jmol._serverUrl;
@@ -20705,6 +20745,6 @@ Sys.err.write = function(buf, offset, len) {
 })(Clazz, Jmol); // requires JSmolCore.js
 
 }; // called by external application 
-Jmol.___JmolDate="$Date: 2026-06-12 11:39:46 -0500 (Fri, 12 Jun 2026) $"
+Jmol.___JmolDate="$Date: 2026-09-27 22:52:10 -0500 (Sun, 27 Sep 2026) $"
 Jmol.___fullJmolProperties="src/org/jmol/viewer/Jmol.properties"
-Jmol.___JmolVersion="16.4.7" // (legacy) also 16.4.8 (swingJS)
+Jmol.___JmolVersion="16.5.3" // (legacy) also 16.5.4 (swingJS)

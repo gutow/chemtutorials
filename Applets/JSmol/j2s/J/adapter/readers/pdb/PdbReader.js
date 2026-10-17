@@ -160,7 +160,7 @@ return true;
 case 12:
 case 13:
 case 14:
-this.scale(ptOption - 11);
+this.scale(ptOption - 12 + 1);
 return true;
 case 15:
 this.expdta();
@@ -1193,4 +1193,4 @@ this.connectNextAtomSet = index + 1;
 this.connectNextAtomIndex = firstAtom;
 }, "~N,~B");
 });
-;//5.0.1-v7 Fri Jun 12 11:18:14 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

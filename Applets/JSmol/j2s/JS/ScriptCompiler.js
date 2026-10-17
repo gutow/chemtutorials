@@ -773,7 +773,7 @@ break out;
 case 134223363:
 var isAppend = (this.tokAt(1) == 1073741839);
 if (this.nTokens == 1 || isAppend && (this.nTokens == 2 || this.nTokens == 3 && this.tokAt(2) == 2)) {
-if (isAppend && this.nTokens == 2 && JU.PT.isDigit(this.charAt(this.ichToken))) break out;
+if (isAppend && this.nTokens == 2 && this.peekingAtLoneInteger()) break out;
 var isDataBase = JV.Viewer.isDatabaseCode(this.charAt(this.ichToken));
 if (this.lookingAtLoadFormat(isDataBase)) {
 var strFormat = this.script.substring(this.ichToken, this.ichToken + this.cchToken);
@@ -1950,6 +1950,14 @@ if (ch != ' ' && ch != '*' && ch != '?' && !JU.PT.isLetter(ch)) return false;
 this.cchToken = ichT - this.ichToken;
 return true;
 });
+Clazz.defineMethod(c$, "peekingAtLoneInteger", 
+function(){
+var pt = this.cchToken;
+if (this.lookingAtInteger() == 2147483647) return false;
+var pt2 = this.ichToken + this.cchToken;
+this.cchToken = pt;
+return JU.PT.isWhitespace(this.charAt(pt2));
+});
 Clazz.defineMethod(c$, "lookingAtInteger", 
 function(){
 if (this.ichToken == this.cchScript) return 2147483647;
@@ -2120,4 +2128,4 @@ JU.Logger.error(this.errorMessage);
 }return false;
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

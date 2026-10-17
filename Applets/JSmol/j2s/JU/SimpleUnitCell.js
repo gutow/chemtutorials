@@ -599,9 +599,12 @@ c$.parseSimpleMath = Clazz.defineMethod(c$, "parseSimpleMath",
 function(vwr, suvw){
 suvw = JU.PT.rep(suvw.toLowerCase(), " ", "");
 if (suvw.indexOf('(') < 0) return suvw;
+var isNeg = suvw.startsWith("!");
+if (isNeg) suvw = suvw.substring(1);
 if (suvw.indexOf("pi") >= 0) {
 suvw = JU.PT.rep(suvw, "pi", "(180)");
-}var parts = suvw.$replace('"', ' ').$replace('\'', ' ').$plit(",");
+}suvw = JU.PT.rep(suvw, ")(", ")*(");
+var parts = suvw.$replace('"', ' ').$replace('\'', ' ').$plit(",");
 for (var p = 0; p < parts.length; p++) {
 var part = parts[p].trim();
 if (part.indexOf('(') < 0) continue;
@@ -650,7 +653,8 @@ break;
 }
 parts[p] = part.substring(1);
 }
-return JU.PT.join(parts, ',', 0);
+var ret = (isNeg ? "!" : "") + JU.PT.join(parts, ',', 0);
+return ret;
 }, "JV.Viewer,~S");
 Clazz.overrideMethod(c$, "toString", 
 function(){
@@ -658,4 +662,4 @@ return "[" + this.a + " " + this.b + " " + this.c + " " + this.alpha + " " + thi
 });
 c$.functions =  Clazz.newArray(-1, ["sqrt", "sin", "cos", "tan", "+", "-", "*", "/"]);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026

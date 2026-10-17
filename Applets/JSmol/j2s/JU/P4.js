@@ -22,4 +22,4 @@ var dw = this.w - p1.w;
 return Math.sqrt(dx * dx + dy * dy + dz * dz + dw * dw);
 }, "JU.P4");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026

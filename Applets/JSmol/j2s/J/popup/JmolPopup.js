@@ -709,4 +709,4 @@ if (name.indexOf("captureLooping") >= 0) info = (this.vwr.am.animationReplayMode
 return (info == null ? text : text.substring(0, pt) + " (" + info + ")");
 }, "~S,~S");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

@@ -622,4 +622,4 @@ javajs.img.GifEncoder.rgb2xyz = JU.M3.newA9( Clazz.newFloatArray(-1, [0.4124, 0.
 javajs.img.GifEncoder.xyz2rgb = JU.M3.newA9( Clazz.newFloatArray(-1, [3.2406, -1.5372, -0.4986, -0.9689, 1.8758, 0.0415, 0.0557, -0.204, 1.0570]));
 }c$.INTERLACE_PARAMS =  Clazz.newIntArray(-1, [8, 8, 4, 2, 4, 2, 1, 0]);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026

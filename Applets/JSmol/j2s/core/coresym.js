@@ -203,7 +203,7 @@ this.firstAtom = atomMax++;
 addBonds = false;
 break;
 }
-var assemblyIdAtoms = thisBiomolecule.get("asemblyIdAtoms");
+var assemblyIdAtoms = thisBiomolecule.get("assemblyIdAtoms");
 if (filter.indexOf("#<") >= 0) {
 len = Math.min(len, JU.PT.parseInt(filter.substring(filter.indexOf("#<") + 2)) - 1);
 filter = JU.PT.rep(filter, "#<", "_<");
@@ -225,8 +225,10 @@ var notIdentity = !mat.equals(this.mident);
 var chains = (biomtchains == null ? null : biomtchains.get(imt));
 if (chains != null && assemblyIdAtoms != null) {
 bsAtoms =  new JU.BS();
-for (var e, $e = assemblyIdAtoms.entrySet().iterator (); $e.hasNext()&& ((e = $e.next ()) || true);) if (chains.indexOf(":" + e.getKey() + ";") >= 0) bsAtoms.or(e.getValue());
-
+for (var e, $e = assemblyIdAtoms.entrySet().iterator (); $e.hasNext()&& ((e = $e.next ()) || true);) {
+if (chains.indexOf(":" + e.getKey() + ";") >= 0) {
+bsAtoms.or(e.getValue());
+}}
 if (this.asc.bsAtoms != null) bsAtoms.and(this.asc.bsAtoms);
 chains = null;
 }var lastID = -1;
@@ -416,9 +418,9 @@ this.acr.addVibrations = false;
 }return this.symmetry;
 }, "J.adapter.smarter.XtalSymmetry.FileSymmetry");
 Clazz_defineMethod(c$, "finalizeMoments", 
-function(spinFrame, spinFrameExt, htCellTypes){
-this.getFileSymmetry().preSymmetryFinalizeMoments(this.acr, this.asc, spinFrame, spinFrameExt, htCellTypes);
-}, "~S,~S,java.util.Map");
+function(spinFrameExt, htCellTypes){
+this.getFileSymmetry().preSymmetryFinalizeMoments(this.acr, this.asc, spinFrameExt, htCellTypes);
+}, "java.util.Map,java.util.Map");
 Clazz_defineMethod(c$, "setMagneticMoments", 
 function(isCartesian){
 return (this.asc.iSet < 0 || !this.acr.vibsFractional ? 0 : this.getBaseSymmetry().postSymmetrySetMagneticMoments(this.asc, isCartesian));
@@ -1183,10 +1185,10 @@ function(iop, axes, ptTemp, mTemp){
 return (iop == 0 ? axes : this.spaceGroup.symmetryOperations[iop].rotateAxes(axes, this.unitCell, ptTemp, mTemp));
 }, "~N,~A,JU.P3,JU.M3");
 Clazz_defineMethod(c$, "preSymmetryFinalizeMoments", 
-function(acr, asc, spinFrameStr, spinFrameExt, htCellTypes){
-this.spinFrameExt = spinFrameExt;
+function(acr, asc, ext, htCellTypes){
+this.spinFrameExt = ext;
 this.spinFrameToCartXYZ = null;
-var version = this.getSpinExt(spinFrameExt, "version");
+var version = this.getSpinExt(this.spinFrameExt, "version");
 if (version == null) this.doNormalizeSpinFrame = acr.checkFilterKey("SPINNORM");
  else this.doNormalizeSpinFrame = (version.compareTo("0.13.0") < 0);
 System.out.println("doNormalizeSpinFrame=" + this.doNormalizeSpinFrame);
@@ -1194,10 +1196,11 @@ var a = acr.unitCellParams[0];
 var b = acr.unitCellParams[1];
 var c = acr.unitCellParams[2];
 this.spinFrameStr = null;
-if (spinFrameStr != null) {
-this.spinFrameStr = spinFrameStr = this.evaluateSpinFrameStr(acr, spinFrameStr, a, b, c);
-htCellTypes.put("spin", spinFrameStr);
-var spinABC = this.preSymmetrySetSpinFrameMatrices(acr, spinFrameStr);
+if (this.spinFrameExt != null) {
+var spinFrame = this.fixSpinFrameInfo(this.spinFrameExt);
+this.spinFrameStr = this.evaluateSpinFrameStr(acr, spinFrame, a, b, c);
+htCellTypes.put("spin", this.spinFrameStr);
+var spinABC = this.preSymmetrySetSpinFrameMatrices(acr, this.spinFrameStr);
 a = spinABC[1].length();
 b = spinABC[2].length();
 c = spinABC[3].length();
@@ -1211,7 +1214,7 @@ this.spinFrameToCartXYZ.mul2(this.spinFrameRotationMatrix, this.spinFrameToCartX
 this.spinPointGroupAxesXYZ[0].setP(spinABC[1]).scale(1 / a);
 this.spinPointGroupAxesXYZ[1].setP(spinABC[2]).scale(1 / b);
 this.spinPointGroupAxesXYZ[2].setP(spinABC[3]).scale(1 / c);
-System.out.println("XtalSymmetry spinFramePp=\n " + spinFrameStr + "\nrotation=\n " + this.spinFrameRotationMatrix + "\nspinFrameCartXYZ=\n " + this.spinFrameToCartXYZ);
+System.out.println("XtalSymmetry spinFramePp=\n " + this.spinFrameStr + "\nrotation=\n " + this.spinFrameRotationMatrix + "\nspinFrameCartXYZ=\n " + this.spinFrameToCartXYZ);
 if (this.spinFrameRotationMatrix != null) asc.setCurrentModelInfo("spinFrameRotationMatrix", this.spinFrameRotationMatrix);
 asc.setCurrentModelInfo("pointGroupAxes", this.spinPointGroupAxesXYZ);
 }var magneticScaling = JU.P3.new3(1 / a, 1 / b, 1 / c);
@@ -1222,13 +1225,47 @@ var v = asc.atoms[i].vib;
 if (v != null) {
 v.scaleT(magneticScaling);
 if (v.isFractional) {
-if (v.magMoment == 0) {
+if (acr.modDim == 0 && v.length() == 0) {
+asc.atoms[i].vib = null;
+continue;
+}if (v.magMoment == 0) {
 if (this.unitCell == null) {
 this.setUnitCellFromParams(acr.unitCellParams, false, acr.cellSlop);
 }this.toCartesian(vt.setP(v), true);
 v.magMoment = vt.length();
 }}}}
-}, "J.adapter.smarter.AtomSetCollectionReader,J.adapter.smarter.AtomSetCollection,~S,~S,java.util.Map");
+}, "J.adapter.smarter.AtomSetCollectionReader,J.adapter.smarter.AtomSetCollection,java.util.Map,java.util.Map");
+Clazz_defineMethod(c$, "fixSpinFrameInfo", 
+function(spinFrameExt){
+var bs =  new JU.BS();
+var errMsg = "";
+for (var i = 0; i < 4; i++) {
+if (spinFrameExt.containsKey(J.adapter.smarter.XtalSymmetry.FileSymmetry.transformTags[i])) bs.set(i);
+}
+if (bs.cardinality() > 1) {
+bs.clearBits(0, bs.length() - 1);
+}for (var i = 0; i < 4; i++) {
+if (!bs.get(i)) {
+var s = spinFrameExt.remove(J.adapter.smarter.XtalSymmetry.FileSymmetry.transformTags[i]);
+if (s != null) errMsg += "Redundant spin transform removed: " + J.adapter.smarter.XtalSymmetry.FileSymmetry.transformTags[i] + "\n";
+}}
+var t = Math.max(0, bs.nextSetBit(0));
+var spinFrame = spinFrameExt.get(J.adapter.smarter.XtalSymmetry.FileSymmetry.transformTags[t]);
+if (spinFrame == null) {
+t = 3;
+spinFrame = "a,b,c";
+} else if (spinFrameExt.containsKey("ignoreForCollinear")) {
+errMsg = "Structure is collinear, but spinFrame is present. Spin frame " + spinFrame + " ignored; using 'a,b,c'\n";
+t = 3;
+spinFrame = "a,b,c";
+} else if (spinFrameExt.containsKey("flagForCollinear") && !spinFrame.equals("a,b,c")) {
+errMsg = "Structure is collinear, but spinFrame is present. Collinear nature ignored. Spin frame " + spinFrame + " is being used\n";
+}spinFrame = J.adapter.smarter.XtalSymmetry.FileSymmetry.transformTags[t] + ":" + spinFrame;
+System.out.println("XtalSymmetry using " + spinFrame);
+if (errMsg.length > 0) System.err.print(errMsg);
+spinFrame = spinFrame.substring(spinFrame.lastIndexOf("_", spinFrame.indexOf(':')) + 1);
+return spinFrame;
+}, "java.util.Map");
 Clazz_defineMethod(c$, "evaluateSpinFrameStr", 
 function(acr, s, a, b, c){
 var pt = s.indexOf(":");
@@ -1338,11 +1375,8 @@ return a;
 }, "~S");
 Clazz_defineMethod(c$, "getSpinExt", 
 function(spinFrameExt, name){
-if (spinFrameExt == null) return null;
-name = ";" + name + "=";
-var pt = spinFrameExt.indexOf(name);
-return (pt < 0 ? null : spinFrameExt.substring(pt + name.length, spinFrameExt.indexOf(';', pt + 1)));
-}, "~S,~S");
+return (spinFrameExt == null ? null : spinFrameExt.get(name));
+}, "java.util.Map,~S");
 Clazz_defineMethod(c$, "postSymmetrySetMagneticMoments", 
 function(asc, isCartesian){
 if (this.nSpins > 0) return this.nSpins;
@@ -1368,9 +1402,10 @@ v1 = null;
 }}}
 return this.nSpins;
 }, "J.adapter.smarter.AtomSetCollection,~B");
+c$.transformTags =  Clazz_newArray(-1, ["spinframe_orientation_hex", "spinframe_orientation_cartn", "transform_spinframe_p_matrix", "transform_spinframe_p_abc"]);
 /*eoif3*/})();
 });
-;//5.0.1-v7 Fri Jun 12 11:30:14 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026
 Clazz_declarePackage("JS");
 Clazz_load(["J.api.SymmetryInterface"], "JS.Symmetry", ["java.util.Hashtable", "JU.AU", "$.BS", "$.JSJSONParser", "$.Lst", "$.M4", "$.P3", "$.PT", "$.Quat", "$.Rdr", "$.SB", "J.api.Interface", "J.bspt.Bspt", "JS.PointGroup", "$.SpaceGroup", "$.SymmetryInfo", "$.SymmetryOperation", "$.UnitCell", "JU.BSUtil", "$.Escape", "$.Logger", "$.SimpleUnitCell", "JV.FileManager"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -1386,6 +1421,7 @@ this.symmetryInfo = null;
 this.desc = null;
 this.transformMatrix = null;
 this.spinFrameToCartXYZ = null;
+this.temp4 = null;
 Clazz_instantialize(this, arguments);}, JS, "Symmetry", null, J.api.SymmetryInterface);
 /*LV!1824 unnec constructor*/Clazz_overrideMethod(c$, "getSymopList", 
 function(doNormalize){
@@ -2137,7 +2173,7 @@ if (this.unitCell == null) return "";
 var sg = this.spaceGroup;
 if (sg == null && this.symmetryInfo != null) {
 sg = JS.SpaceGroup.determineSpaceGroupN(this.symmetryInfo.sgName);
-if (sg == null) {
+if (sg == null || !sg.getDisplayName().equals(this.symmetryInfo.fileSpaceGroup.getDisplayName())) {
 var id = this.getSpaceGroupJmolId();
 if (id == null) id = this.getSpaceGroupClegId();
 sg = JS.SpaceGroup.getSpaceGroupFromJmolClegOrITA(this.vwr, id);
@@ -2176,9 +2212,10 @@ JS.Symmetry.wyckoffFinder = J.api.Interface.getInterface("JS.WyckoffFinder", nul
 }return JS.Symmetry.wyckoffFinder;
 });
 Clazz_overrideMethod(c$, "getTransform", 
-function(fracA, fracB, best){
-return this.getDesc(null).getTransform(this.unitCell, this.getSymmetryOperations(), fracA, fracB, best);
-}, "JU.P3,JU.P3,~B");
+function(fracA, fracB){
+if (this.temp4 == null) this.temp4 =  Clazz_newArray(-1, [ new JU.P3(),  new JU.P3(),  new JU.P3(),  new JU.P3()]);
+return this.unitCell.getTransform(this.getSymmetryOperations(), fracA, fracB, this.temp4);
+}, "JU.P3,JU.P3");
 Clazz_defineMethod(c$, "isWithinUnitCell", 
 function(pt, x, y, z, packing){
 return this.unitCell.isWithinUnitCell(x, y, z, packing, pt);
@@ -2855,6 +2892,10 @@ Clazz_overrideMethod(c$, "toCartesianSpin",
 function(v){
 this.unitCell.toCartesianSpin(v);
 }, "JU.T3");
+Clazz_overrideMethod(c$, "getQuaternionRotationForUVW", 
+function(uvw, planeUVW){
+return (this.unitCell == null ? null : this.unitCell.getQuaternionRotationForHKL(uvw, planeUVW));
+}, "JU.T3,JU.P4");
 c$.nullDesc = null;
 c$.aflowStructures = null;
 c$.itaData = null;
@@ -2881,7 +2922,7 @@ c$.wyckoffFinder = null;
 c$.clegInstance = null;
 c$.groupFactory = null;
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026
 Clazz_declarePackage("JS");
 Clazz_load(["java.util.Hashtable", "JU.M3", "$.V3"], "JS.PointGroup", ["JU.Lst", "$.P3", "$.PT", "$.Quat", "$.SB", "J.bspt.Bspt", "JS.SymmetryOperation", "JU.BSUtil", "$.Escape", "$.Logger", "$.Point3fi"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -4066,7 +4107,7 @@ c$.maxAxis = JS.PointGroup.axesMaxN.length;
 c$.SF2HM = ("Cn,1,2,3,4,5,6,7,8,9,10,11,12|Cnv,m,2m,3m,4mm,5m,6mm,7m,8mm,9m,10mm,11m,12mm,\u221em|Sn,,-1,-6,-4,(-10),-3,(-14),-8,(-18),-5,(-22),(-12)|Cnh,m,2/m,-6,4/m,-10,6/m,-14,8/m,-18,10/m,-22,12/m|Dn,,222,32,422,52,622,72,822,92,(10)22,(11)2,(12)22|Dnd,,-42m,-3m,-82m,-5m,(-12)2m,-7m,(-16)2m,-9m,(-20)2m,(-11)m,(-24)2m|Dnh,,mmm,-6m2,4/mmm,(-10)m2,6/mmm,(-14)m2,8/mmm,(-18)m2,10/mmm,(-22)m2,12/mmm,\u221e/mm|Ci,-1|Cs,m|T,23|Th,m-3|Td,-43m|O,432|Oh,m-3m").$plit("\\|");
 c$.htSFToHM = null;
 });
-;//5.0.1-v7 Fri Jun 12 11:30:14 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JS");
 Clazz_load(["JS.HallInfo", "java.util.Hashtable"], "JS.SpaceGroup", ["java.util.Arrays", "JU.AU", "$.Lst", "$.M3", "$.M4", "$.P3", "$.PT", "$.SB", "JS.Symmetry", "$.SymmetryOperation", "$.UnitCell", "JU.Logger", "$.SimpleUnitCell"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -5662,7 +5703,7 @@ c$.ClegtoHM = null;
 {
 JS.SpaceGroup.getSpaceGroups();
 }});
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026
 Clazz_declarePackage("JS");
 Clazz_load(["JU.P3"], "JS.SpaceGroupFinder", ["java.util.Arrays", "JU.BS", "$.Lst", "$.M4", "$.Measure", "$.PT", "$.V3", "J.api.Interface", "JS.SpaceGroup", "$.SymmetryOperation", "$.UnitCell", "JU.BSUtil", "JV.FileManager"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -6499,7 +6540,7 @@ c$.opXYZ = null;
 c$.ops = null;
 c$.rdr = null;
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026
 Clazz_declarePackage("JS");
 Clazz_load(["JU.M4"], "JS.HallInfo", ["JU.P3i", "$.SB", "JS.SymmetryOperation", "JU.Logger"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -6935,7 +6976,7 @@ return JS.SymmetryOperation.getXYZFromMatrix(this.seitzMatrix12ths, true, allPos
 }, "~B");
 /*eoif3*/})();
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JS");
 Clazz_load(["JU.M4", "$.P3"], "JS.SymmetryOperation", ["java.util.Hashtable", "JU.Lst", "$.M3", "$.Matrix", "$.Measure", "$.P4", "$.PT", "$.SB", "$.V3", "JU.BoxInfo", "$.Logger", "$.Parser"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -8361,7 +8402,7 @@ function(vtrans){
 vtrans.x = JU.PT.approx(vtrans.x, 12);
 vtrans.y = JU.PT.approx(vtrans.y, 12);
 vtrans.z = JU.PT.approx(vtrans.z, 12);
-}, "JU.V3");
+}, "JU.T3");
 Clazz_defineMethod(c$, "getCode", 
 function(){
 if (this.opAxisCode != null) {
@@ -8597,7 +8638,7 @@ c$.C3codes =  Clazz_newIntArray(-1, [0x031112, 0x121301, 0x130112, 0x021311, 0x1
 c$.xneg = null;
 c$.opPlanes = null;
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JS");
 Clazz_load(null, "JS.SymmetryInfo", ["JU.PT", "JS.SpaceGroup", "$.SymmetryOperation", "JU.SimpleUnitCell"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -8757,7 +8798,7 @@ function(){
 return this.fileSpaceGroup;
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026
 Clazz_declarePackage("JS");
 Clazz_load(["JU.P3", "$.V3"], "JS.SymmetryDesc", ["java.util.Hashtable", "JU.A4", "$.BS", "$.Lst", "$.M3", "$.M4", "$.Measure", "$.P4", "$.PT", "$.Quat", "$.SB", "J.api.Interface", "JS.T", "JS.SpaceGroup", "$.Symmetry", "$.SymmetryOperation", "JU.Escape", "$.Logger", "$.Vibration"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -8810,8 +8851,8 @@ return a;
 return sb.toString();
 }, "J.api.SymmetryInterface,~N,~N,JU.P3,JU.P3,JU.P3,~S,~S,~N,~N,~N,JU.BS");
 Clazz_defineMethod(c$, "getDrawID", 
-function(id){
-return this.drawID + id + "\" ";
+function(name){
+return this.drawID + name + "\" ";
 }, "~S");
 Clazz_defineMethod(c$, "getSymopInfo", 
 function(iAtom, xyz, op, translation, pt, pt2, id, type, scaleFactor, nth, options, opList){
@@ -8953,43 +8994,6 @@ info.put("spaceGroupNote", "could not identify space group from name: " + sgName
 }}info.put("spaceGroupInfo", data);
 return info;
 }, "J.api.SymmetryInterface,~N,~S,~N,JU.P3,JU.P3,~S,~N,~N,~B,~B,~N,J.api.SymmetryInterface,JU.BS");
-Clazz_defineMethod(c$, "getTransform", 
-function(uc, ops, fracA, fracB, best){
-JS.SymmetryDesc.pta02.setT(fracB);
-JS.SymmetryDesc.vtrans.setT(JS.SymmetryDesc.pta02);
-uc.unitize(JS.SymmetryDesc.pta02);
-var dmin = 3.4028235E38;
-var imin = -1;
-for (var i = 0, n = ops.length; i < n; i++) {
-var op = ops[i];
-JS.SymmetryDesc.pta01.setT(fracA);
-op.rotTrans(JS.SymmetryDesc.pta01);
-JS.SymmetryDesc.ptemp.setT(JS.SymmetryDesc.pta01);
-uc.unitize(JS.SymmetryDesc.pta01);
-var d = JS.SymmetryDesc.pta01.distanceSquared(JS.SymmetryDesc.pta02);
-if (d < 1.96E-6) {
-JS.SymmetryDesc.vtrans.sub(JS.SymmetryDesc.ptemp);
-JS.SymmetryOperation.normalize12ths(JS.SymmetryDesc.vtrans);
-var m2 = JU.M4.newM4(op);
-m2.add(JS.SymmetryDesc.vtrans);
-JS.SymmetryDesc.pta01.setT(fracA);
-m2.rotTrans(JS.SymmetryDesc.pta01);
-uc.unitize(JS.SymmetryDesc.pta01);
-d = JS.SymmetryDesc.pta01.distanceSquared(JS.SymmetryDesc.pta02);
-if (d >= 1.96E-6) {
-continue;
-}return m2;
-}if (d < dmin) {
-dmin = d;
-imin = i;
-}}
-if (best) {
-var op = ops[imin];
-JS.SymmetryDesc.pta01.setT(fracA);
-op.rotTrans(JS.SymmetryDesc.pta01);
-uc.unitize(JS.SymmetryDesc.pta01);
-}return null;
-}, "JS.UnitCell,~A,JU.P3,JU.P3,~B");
 c$.getType = Clazz_defineMethod(c$, "getType", 
 function(id){
 var type;
@@ -9214,6 +9218,7 @@ return bsInfo;
 Clazz_defineMethod(c$, "createInfoArray", 
 function(op, uc, ptFrom, ptTarget, id, scaleFactor, options, haveTranslation, bsInfo, isSpaceGroup, isSpaceGroupAll, nDim){
 op.doFinalize();
+var isIdentity = (op.getOpType() == 0);
 var matrixOnly = ( new Boolean (bsInfo.get(10) & (bsInfo.cardinality() == (bsInfo.get(24) ? 2 : 1))).valueOf());
 var isTimeReversed = (op.timeReversal == -1);
 var isSpinSG = (op.spinU != null);
@@ -9234,7 +9239,9 @@ JS.SymmetryDesc.vtrans.setT(JS.SymmetryDesc.pta02);
 uc.unitize(JS.SymmetryDesc.pta02);
 if (JS.SymmetryDesc.pta01.distanceSquared(JS.SymmetryDesc.pta02) >= 1.96E-6) return null;
 JS.SymmetryDesc.vtrans.sub(JS.SymmetryDesc.ptemp);
-}var m2 = JU.M4.newM4(op);
+if (isIdentity) {
+isIdentity = false;
+}}var m2 = JU.M4.newM4(op);
 m2.add(JS.SymmetryDesc.vtrans);
 if (bsInfo.get(10) && ptTarget != null && pta00.equals(ptTarget)) {
 m2.m00 = Math.round(m2.m00);
@@ -9511,11 +9518,12 @@ var cmds = null;
 var createSpinDraw = (this.iModelSpin >= 0 && isSpinSG);
 while (true) {
 if (id == null || !bsInfo.get(3)) break;
-if (op.getOpType() == 0 || isSpaceGroupAll && op.isIrrelevant) {
+if (isIdentity || isSpaceGroupAll && op.isIrrelevant) {
 if (JU.Logger.debugging) System.out.println("!!SD irrelevent " + op.getOpTitle() + op.getOpPoint());
 cmds = "";
 break;
 }var opType = null;
+if (!id.endsWith("_")) id += "_";
 this.drawID = "\ndraw ID \"" + id;
 var drawSB =  new JU.SB();
 drawSB.append(this.getDrawID("*")).append(" delete");
@@ -9766,13 +9774,18 @@ JS.SymmetryDesc.ptemp.scaleAdd2(0.9, JS.SymmetryDesc.ptemp, JS.SymmetryDesc.ptem
 if (drawFrameZ) this.drawLine(drawSB, "frame2Z", 0.2, JS.SymmetryDesc.ptemp2, JS.SymmetryDesc.ptemp, "purple");
 drawSB.append("\nsym_point = " + JU.Escape.eP(pta00));
 drawSB.append("\nvar p0 = " + JU.Escape.eP(JS.SymmetryDesc.ptemp2));
+var fromAtom = null;
 if (Clazz_instanceOf(pta00,"JM.Atom")) {
+fromAtom = pta00;
 drawSB.append("\nvar set2 = within(0.2,p0);if(!set2){set2 = within(0.2,p0.uxyz.xyz)}");
-drawSB.append("\n set2 &= {_" + (pta00).getElementSymbol() + "}");
+drawSB.append("\n set2 &= {_" + fromAtom.getElementSymbol() + "}");
 } else {
 drawSB.append("\nvar set2 = p0.uxyz");
 }drawSB.append("\nsym_target = set2;if (set2) {");
-if (!isSpecial && options != 1073742066 && ptTarget == null && !haveTranslation) {
+if (fromAtom != null && ptTarget == null) {
+var cmd = "\n modelkit set " + "atomset" + " " + "@{" + JU.PT.esc(id) + "+'|'+" + fromAtom.i + "+'|'+" + "set2" + "+'|'+" + "'draw ID " + id + " symop ({" + fromAtom.i + "})' + set2" + "}";
+drawSB.append(cmd);
+}if (!isSpecial && options != 1073742066 && ptTarget == null && !haveTranslation) {
 drawSB.append(this.getDrawID("offsetFrameX")).append(" diameter 0.20 @{set2.xyz} @{set2.xyz + ").append(JU.Escape.eP(vt1)).append("*0.9} color red");
 drawSB.append(this.getDrawID("offsetFrameY")).append(" diameter 0.20 @{set2.xyz} @{set2.xyz + ").append(JU.Escape.eP(vt2)).append("*0.9} color green");
 if (drawFrameZ) drawSB.append(this.getDrawID("offsetFrameZ")).append(" diameter 0.20 @{set2.xyz} @{set2.xyz + ").append(JU.Escape.eP(vt3)).append("*0.9} color purple");
@@ -10231,9 +10244,9 @@ c$.pta02 =  new JU.P3();
 c$.vtrans =  new JU.V3();
 c$.keys =  Clazz_newArray(-1, ["xyz", "xyzOriginal", "label", null, "fractionalTranslation", "cartesianTranslation", "inversionCenter", null, "axisVector", "rotationAngle", "matrix", "unitTranslation", "centeringVector", "timeReversal", "plane", "_type", "id", "cif2", "xyzCanonical", "xyzNormalized", "spin"]);
 });
-;//5.0.1-v7 Fri Jun 12 11:30:14 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026
 Clazz_declarePackage("JS");
-Clazz_load(["JU.SimpleUnitCell", "JU.P3", "JV.JC"], "JS.UnitCell", ["java.util.Hashtable", "JU.AU", "$.Lst", "$.M3", "$.M4", "$.P4", "$.PT", "$.Quat", "$.V3", "J.api.Interface", "JS.Symmetry", "JU.BoxInfo", "$.Escape", "$.Point3fi"], function(){
+Clazz_load(["JU.SimpleUnitCell", "JU.P3", "JV.JC"], "JS.UnitCell", ["java.util.Hashtable", "JU.AU", "$.Lst", "$.M3", "$.M4", "$.Measure", "$.P4", "$.PT", "$.Quat", "$.V3", "J.api.Interface", "JS.Symmetry", "$.SymmetryOperation", "JU.BoxInfo", "$.Escape", "$.Point3fi"], function(){
 var c$ = Clazz_decorateAsClass(function(){
 this.moreInfo = null;
 this.name = "";
@@ -11258,10 +11271,88 @@ this.toCartesian(v, true);
 return;
 }this.spinFrameToCartXYZ.rotate(v);
 }, "JU.T3");
+Clazz_defineMethod(c$, "getQuaternionRotationForHKL", 
+function(uvw, planeHKL){
+var c =  new JU.P3();
+this.toCartesian(c, false);
+var m =  new JU.V3();
+var a1 =  new JU.V3();
+JU.Measure.getPlaneProjection(c, planeHKL, a1, m);
+var type = 0;
+if (uvw == null) {
+uvw = JU.P3.new3(1, 1, 1);
+}if (uvw.x != 0) type |= 4;
+if (uvw.y != 0) type |= 2;
+if (uvw.z != 0) type |= 1;
+var ref =  new JU.V3();
+switch (type) {
+case 1:
+ref.x = -1;
+break;
+case 2:
+ref.z = -1;
+break;
+case 4:
+ref.y = -1;
+break;
+case 3:
+ref.x = 1;
+break;
+case 5:
+ref.y = 1;
+break;
+case 6:
+ref.z = 1;
+break;
+case 7:
+ref.x = 1;
+break;
+}
+a1 =  new JU.V3();
+var a2 =  new JU.V3();
+a1.cross(m, ref);
+a2.cross(a1, m);
+a1.cross(a2, m);
+a2.normalize();
+a1.normalize();
+var q = JU.Quat.getQuaternionFrame(null, a1, a2);
+return q;
+}, "JU.T3,JU.P4");
+Clazz_defineMethod(c$, "getTransform", 
+function(ops, fracA, fracB, temp){
+var p0 = temp[0];
+var p1 = temp[1];
+var vtrans = temp[2];
+var ptemp = temp[3];
+p1.setT(fracB);
+vtrans.setT(p1);
+this.unitize(p1);
+for (var i = 0, n = ops.length; i < n; i++) {
+var op = ops[i];
+p0.setT(fracA);
+op.rotTrans(p0);
+ptemp.setT(p0);
+this.unitize(p0);
+var d = p0.distanceSquared(p1);
+if (d < 1.96E-6) {
+vtrans.sub(ptemp);
+JS.SymmetryOperation.normalize12ths(vtrans);
+var m2 = JU.M4.newM4(op);
+m2.add(vtrans);
+p0.setT(fracA);
+m2.rotTrans(p0);
+this.unitize(p0);
+d = p0.distanceSquared(p1);
+if (d >= 1.96E-6) {
+continue;
+}return m2;
+}}
+return null;
+}, "~A,JU.P3,JU.P3,~A");
 c$.unitVectors =  Clazz_newArray(-1, [JV.JC.axisX, JV.JC.axisY, JV.JC.axisZ]);
 c$.v0 = null;
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026
 Clazz_declarePackage("JS");
 Clazz_load(["J.api.AtomIndexIterator"], "JS.UnitCellIterator", ["JU.Lst", "$.P3", "$.P3i", "JU.BoxInfo", "$.Logger", "$.Point3fi"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -11408,7 +11499,7 @@ this.center = null;
 this.translation = null;
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JS");
 Clazz_load(["java.util.Hashtable", "JU.P3", "$.V3"], "JS.WyckoffFinder", ["JU.Lst", "$.M4", "$.Measure", "$.P4", "$.PT", "$.SB", "JS.SpaceGroup", "$.Symmetry", "$.SymmetryOperation"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -11847,7 +11938,7 @@ c$.vt =  new JU.V3();
 c$.nullHelper = null;
 c$.helpers =  new java.util.Hashtable();
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JS");
 Clazz_load(["JU.M4"], "JS.CLEG", ["java.util.Arrays", "JU.AU", "$.BS", "$.P3", "$.PT", "JS.SV", "JS.SpaceGroup", "$.UnitCell", "JV.Viewer"], function(){
 var c$ = Clazz_declareType(JS, "CLEG", null);
@@ -12577,7 +12668,7 @@ this.mkIsAssign = isAssign;
 /*eoif3*/})();
 c$.allow300 = false;
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026
 })(Clazz
 ,Clazz.getClassName
 ,Clazz.newLongArray

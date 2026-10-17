@@ -263,4 +263,4 @@ if (this.dotsOrDashes && (this.dashDots == null || this.dashDots === J.render.Fo
 return this.drawLine2(this.g3d, x1, y1, z1, x2, y2, z2, diameter);
 }, "~N,~N,~N,~N,~N,~N,~N");
 });
-;//5.0.1-v7 Fri Jun 12 11:30:14 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026

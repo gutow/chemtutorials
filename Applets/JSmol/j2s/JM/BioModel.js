@@ -8,9 +8,9 @@ this.isMutated = false;
 this.defaultStructure = null;
 this.haveDSSR = false;
 Clazz.instantialize(this, arguments);}, JM, "BioModel", JM.Model);
-Clazz.defineMethod(c$, "setBioModel", 
+Clazz.makeConstructor(c$, 
 function(modelSet, modelIndex, trajectoryBaseIndex, jmolData, properties, auxiliaryInfo){
-this.setupArrays();
+Clazz.superConstructor(this, JM.BioModel);
 this.vwr = modelSet.vwr;
 this.set(modelSet, modelIndex, trajectoryBaseIndex, jmolData, properties, auxiliaryInfo);
 this.isBioModel = true;
@@ -18,7 +18,6 @@ this.vwr.getJBR().getBioModelSet(modelSet);
 this.clearBioPolymers();
 modelSet.am[modelIndex] = this;
 this.pdbID = auxiliaryInfo.get("name");
-return this;
 }, "JM.ModelSet,~N,~N,java.util.Map,java.util.Properties,java.util.Map");
 Clazz.defineMethod(c$, "addBioPolymer", 
 function(polymer){
@@ -295,4 +294,4 @@ if (bsDelete.nextSetBit(0) >= 0) this.ms.deleteBonds(bsDelete, false);
 this.getRasmolHydrogenBonds(bs, bs, null, false, 2147483647, false, null, dsspVersion);
 }, "JU.BS,~N");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

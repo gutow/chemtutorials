@@ -245,7 +245,7 @@ for (var i = bs.nextSetBit(0), pt = 0; i >= 0; i = bs.nextSetBit(i + 1)) p[pt++]
 return p;
 }, "JU.BS");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JS");
 Clazz_load(["JS.ScriptExt"], "JS.IsoExt", ["JU.AU", "$.BS", "$.Lst", "$.M4", "$.Measure", "$.P3", "$.PT", "$.Quat", "$.SB", "$.V3", "J.api.Interface", "J.atomdata.RadiusData", "J.c.VDW", "JS.SV", "$.ScriptEval", "$.ScriptInterruption", "$.T", "JU.BSUtil", "$.BoxInfo", "$.C", "$.Escape", "$.GData", "$.Logger", "$.Parser", "$.Triangulator", "JV.JC"], function(){
 var c$ = Clazz_declareType(JS, "IsoExt", JS.ScriptExt);
@@ -451,7 +451,9 @@ var drawAxes = false;
 var drawUC = false;
 var tok = 0;
 var lattice = null;
+var offset = null;
 var uc = null;
+var ucHKL = null;
 for (var i = eval.iToken; i < this.slen; ++i) {
 var propertyName = null;
 var propertyValue = null;
@@ -525,26 +527,14 @@ break;
 break;
 case 1814695966:
 if (isBest) this.invArg();
-drawUC = true;
-if (eval.isArrayParameter(i + 1)) {
-var oabc = eval.getPointArray(i + 1, -1, false, true);
-i = eval.iToken;
-if (!this.chk) uc = this.vwr.getSymTemp().getUnitCell(oabc, false, null);
-} else {
-switch (this.tokAt(i + 1)) {
-case 4:
-var tr = this.stringParameter(i + 1).toLowerCase();
-i = eval.iToken;
-if (tr.startsWith("unitcell_")) tr = this.vwr.getCurrentModelAuxInfo().get(tr);
-if (!this.chk && tr.length > 0 && (uc = this.vwr.getCurrentUnitCell()) != null) {
-uc = this.vwr.getSymTemp().getUnitCell(uc.getV0abc(tr, null), false, "draw");
-}break;
-case 8:
-case 1073742332:
-ucLattice = eval.getFractionalPoint(i + 1);
-i = eval.iToken;
-break;
-}
+drawUC = !isIntersect;
+var o = this.getUnitCellParameter(i, true);
+if (Clazz_instanceOf(o,"JU.T3")) {
+ucLattice = o;
+i = this.e.iToken;
+} else if (o != null) {
+uc = o;
+i = this.e.iToken;
 }if (this.tokAt(i + 1) == 1073741994) {
 if (tokIntersectBox == 1814695966) tokIntersectBox = 1073741994;
 ++i;
@@ -621,16 +611,19 @@ break;
 }if (this.tokAt(i + 1) == 1073742335) {
 iOn = ++i;
 }break;
-case 1073741998:
 case 134219777:
+if (this.tokAt(i + 1) == 1814695966) {
+ucHKL = this.getUnitCellParameter(++i, false);
+i = this.e.iToken;
+}case 1073741998:
 case 134217750:
 var isProjection = (iOn == i - 1);
 if (!havePoints && !isIntersect && tokIntersectBox == 0) {
-if (eval.theTok == 134219777) {
+if (tok == 134219777) {
 havePoints = true;
 this.setShapeProperty(22, "plane", null);
 var list =  new JU.Lst();
-plane = eval.hklParameter(++i, list, true);
+plane = eval.hklParameterUC(++i, list, true, ucHKL, null);
 i = eval.iToken;
 propertyName = "coords";
 propertyValue = list;
@@ -652,7 +645,7 @@ case 134217750:
 plane = eval.planeParameter(i, isBest);
 break;
 case 134219777:
-plane = eval.hklParameter(++i, null, true);
+plane = eval.hklParameterUC(++i, null, true, ucHKL, null);
 if (this.tokAt(eval.iToken + 1) == 1073742327) {
 isAll = true;
 eval.iToken++;
@@ -941,8 +934,10 @@ if (bsAtoms != null) {
 s = this.vwr.getModelkit(false).drawSymmetry(thisId, isSymop, iatom, xyz, iSym, trans, center, target, intScale, nth, options, opList, false);
 if (s == null) return;
 if ((isSymop || isSpinop) && Clazz_instanceOf(target,"JM.Atom") && Clazz_instanceOf(center,"JM.Atom")) {
-if (eval.fullCommand.indexOf("#quiet") >= 0) s = JU.PT.rep(s, "print", "#print");
-s += "\nmodelkit set atomset " + JU.PT.esc(thisId + "|" + (center).i + "|" + (target).i + "|" + eval.fullCommand) + ";";
+if (eval.fullCommand.indexOf("#quiet") >= 0) {
+s = JU.PT.rep(s, "print", "#print");
+}if (thisId == null) thisId = "sym_";
+s += JS.IsoExt.getAtomSetScript(thisId, (center).i, (target).i, eval.fullCommand);
 }}eval.runBufferedSafely(s.length > 0 ? s : "draw ID \"" + thisId + "*\" delete", eval.outputBuffer);
 return;
 case 4115:
@@ -973,7 +968,7 @@ break;
 case 12290:
 case 10:
 case 1073742325:
-propertyName = "atomSet";
+propertyName = "atomset";
 propertyValue = this.atomExpressionAt(i);
 if (isFrame) center = this.centerParameter(i);
 i = eval.iToken;
@@ -1198,6 +1193,35 @@ var pt = thisId.indexOf("_");
 if (pt >= 0) thisId = thisId.substring(0, pt);
 }this.vwr.getModelkit(false).drawAxes(pts, thisId, (drawAxes ? swidth : "delete"));
 }});
+c$.getAtomSetScript = Clazz_defineMethod(c$, "getAtomSetScript", 
+function(id, i1, i2, cmd){
+return "\nmodelkit set " + "atomset" + JU.PT.esc(id + "|" + i1 + "|" + i2 + "|" + cmd + ";");
+}, "~S,~N,~N,~S");
+Clazz_defineMethod(c$, "getUnitCellParameter", 
+function(i, allowLattice){
+if (this.e.isArrayParameter(i + 1)) {
+var oabc = this.e.getPointArray(i + 1, -1, false, true);
+i = this.e.iToken;
+if (!this.chk) return this.vwr.getSymTemp().getUnitCell(oabc, false, null);
+} else {
+switch (this.tokAt(i + 1)) {
+case 4:
+var tr = this.stringParameter(i + 1).toLowerCase();
+i = this.e.iToken;
+if (tr.startsWith("unitcell_")) tr = this.vwr.getCurrentModelAuxInfo().get(tr);
+var uc = null;
+if (!this.chk && tr.length > 0 && (uc = this.vwr.getCurrentUnitCell()) != null) {
+uc = this.vwr.getSymTemp().getUnitCell(uc.getV0abc(tr, null), false, "draw");
+}return uc;
+case 8:
+case 1073742332:
+var ucLattice = this.e.getFractionalPoint(i + 1);
+i = this.e.iToken;
+if (!allowLattice) this.invArg();
+return ucLattice;
+}
+}return null;
+}, "~N,~B");
 Clazz_defineMethod(c$, "mo", 
 function(isInitOnly, iShape){
 var eval = this.e;
@@ -2040,7 +2064,7 @@ break;
 case 134219777:
 planeSeen = true;
 propertyName = "plane";
-propertyValue = eval.hklParameter(++i, null, true);
+propertyValue = eval.hklParameter(++i, null, true, null);
 i = eval.iToken;
 sbCommand.append(" plane ").append(JU.Escape.eP4(propertyValue));
 break;
@@ -3723,7 +3747,7 @@ return null;
 }
 }, "~N,J.api.SymmetryInterface,JU.BS,~S,~N");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026
 Clazz_declarePackage("JU");
 Clazz_load(["JU.TriangleData"], "JU.Triangulator", ["JU.AU", "$.BS", "$.Lst", "$.Measure", "$.P3", "$.P4", "$.V3"], function(){
 var c$ = Clazz_declareType(JU, "Triangulator", JU.TriangleData);
@@ -3862,7 +3886,7 @@ c$.abFace =  Clazz_newArray(-1, [ Clazz_newIntArray(-1, [0, 4, 5, 3]),  Clazz_ne
 c$.fullCubePolygon =  Clazz_newArray(-1, [ Clazz_newIntArray(-1, [0, 4, 5, 3]),  Clazz_newIntArray(-1, [5, 1, 0, 3]),  Clazz_newIntArray(-1, [1, 5, 6, 2]),  Clazz_newIntArray(-1, [6, 2, 1, 3]),  Clazz_newIntArray(-1, [2, 6, 7, 2]),  Clazz_newIntArray(-1, [7, 3, 2, 3]),  Clazz_newIntArray(-1, [3, 7, 4, 2]),  Clazz_newIntArray(-1, [4, 0, 3, 2]),  Clazz_newIntArray(-1, [6, 5, 4, 0]),  Clazz_newIntArray(-1, [4, 7, 6, 0]),  Clazz_newIntArray(-1, [0, 1, 2, 0]),  Clazz_newIntArray(-1, [2, 3, 0, 0])]);
 c$.fullCubeCorners =  Clazz_newArray(-1, [ Clazz_newIntArray(-1, [1, 4, 3, 3267]),  Clazz_newIntArray(-1, [0, 2, 5, 3087]),  Clazz_newIntArray(-1, [1, 3, 6, 3132]),  Clazz_newIntArray(-1, [2, 0, 7, 3312]),  Clazz_newIntArray(-1, [0, 5, 7, 963]),  Clazz_newIntArray(-1, [1, 6, 4, 783]),  Clazz_newIntArray(-1, [2, 7, 5, 828]),  Clazz_newIntArray(-1, [3, 4, 6, 1008])]);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
 Clazz_load(["JU.P3i"], "JU.TriangleData", null, function(){
 var c$ = Clazz_declareType(JU, "TriangleData", null);
@@ -3871,13 +3895,13 @@ c$.cubeVertexOffsets =  Clazz_newArray(-1, [JU.P3i.new3(0, 0, 0), JU.P3i.new3(1,
 c$.edgeVertexes =  Clazz_newByteArray(-1, [0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7]);
 c$.triangleTable2 =  Clazz_newArray(-1, [null,  Clazz_newByteArray(-1, [0, 8, 3, 7]),  Clazz_newByteArray(-1, [0, 1, 9, 7]),  Clazz_newByteArray(-1, [1, 8, 3, 6, 9, 8, 1, 5]),  Clazz_newByteArray(-1, [1, 2, 10, 7]),  Clazz_newByteArray(-1, [0, 8, 3, 7, 1, 2, 10, 7]),  Clazz_newByteArray(-1, [9, 2, 10, 6, 0, 2, 9, 5]),  Clazz_newByteArray(-1, [2, 8, 3, 6, 2, 10, 8, 1, 10, 9, 8, 3]),  Clazz_newByteArray(-1, [3, 11, 2, 7]),  Clazz_newByteArray(-1, [0, 11, 2, 6, 8, 11, 0, 5]),  Clazz_newByteArray(-1, [1, 9, 0, 7, 2, 3, 11, 7]),  Clazz_newByteArray(-1, [1, 11, 2, 6, 1, 9, 11, 1, 9, 8, 11, 3]),  Clazz_newByteArray(-1, [3, 10, 1, 6, 11, 10, 3, 5]),  Clazz_newByteArray(-1, [0, 10, 1, 6, 0, 8, 10, 1, 8, 11, 10, 3]),  Clazz_newByteArray(-1, [3, 9, 0, 6, 3, 11, 9, 1, 11, 10, 9, 3]),  Clazz_newByteArray(-1, [9, 8, 10, 5, 10, 8, 11, 6]),  Clazz_newByteArray(-1, [4, 7, 8, 7]),  Clazz_newByteArray(-1, [4, 3, 0, 6, 7, 3, 4, 5]),  Clazz_newByteArray(-1, [0, 1, 9, 7, 8, 4, 7, 7]),  Clazz_newByteArray(-1, [4, 1, 9, 6, 4, 7, 1, 1, 7, 3, 1, 3]),  Clazz_newByteArray(-1, [1, 2, 10, 7, 8, 4, 7, 7]),  Clazz_newByteArray(-1, [3, 4, 7, 6, 3, 0, 4, 3, 1, 2, 10, 7]),  Clazz_newByteArray(-1, [9, 2, 10, 6, 9, 0, 2, 3, 8, 4, 7, 7]),  Clazz_newByteArray(-1, [2, 10, 9, 3, 2, 9, 7, 0, 2, 7, 3, 6, 7, 9, 4, 6]),  Clazz_newByteArray(-1, [8, 4, 7, 7, 3, 11, 2, 7]),  Clazz_newByteArray(-1, [11, 4, 7, 6, 11, 2, 4, 1, 2, 0, 4, 3]),  Clazz_newByteArray(-1, [9, 0, 1, 7, 8, 4, 7, 7, 2, 3, 11, 7]),  Clazz_newByteArray(-1, [4, 7, 11, 3, 9, 4, 11, 1, 9, 11, 2, 2, 9, 2, 1, 6]),  Clazz_newByteArray(-1, [3, 10, 1, 6, 3, 11, 10, 3, 7, 8, 4, 7]),  Clazz_newByteArray(-1, [1, 11, 10, 6, 1, 4, 11, 0, 1, 0, 4, 3, 7, 11, 4, 5]),  Clazz_newByteArray(-1, [4, 7, 8, 7, 9, 0, 11, 1, 9, 11, 10, 6, 11, 0, 3, 6]),  Clazz_newByteArray(-1, [4, 7, 11, 3, 4, 11, 9, 4, 9, 11, 10, 6]),  Clazz_newByteArray(-1, [9, 5, 4, 7]),  Clazz_newByteArray(-1, [9, 5, 4, 7, 0, 8, 3, 7]),  Clazz_newByteArray(-1, [0, 5, 4, 6, 1, 5, 0, 5]),  Clazz_newByteArray(-1, [8, 5, 4, 6, 8, 3, 5, 1, 3, 1, 5, 3]),  Clazz_newByteArray(-1, [1, 2, 10, 7, 9, 5, 4, 7]),  Clazz_newByteArray(-1, [3, 0, 8, 7, 1, 2, 10, 7, 4, 9, 5, 7]),  Clazz_newByteArray(-1, [5, 2, 10, 6, 5, 4, 2, 1, 4, 0, 2, 3]),  Clazz_newByteArray(-1, [2, 10, 5, 3, 3, 2, 5, 1, 3, 5, 4, 2, 3, 4, 8, 6]),  Clazz_newByteArray(-1, [9, 5, 4, 7, 2, 3, 11, 7]),  Clazz_newByteArray(-1, [0, 11, 2, 6, 0, 8, 11, 3, 4, 9, 5, 7]),  Clazz_newByteArray(-1, [0, 5, 4, 6, 0, 1, 5, 3, 2, 3, 11, 7]),  Clazz_newByteArray(-1, [2, 1, 5, 3, 2, 5, 8, 0, 2, 8, 11, 6, 4, 8, 5, 5]),  Clazz_newByteArray(-1, [10, 3, 11, 6, 10, 1, 3, 3, 9, 5, 4, 7]),  Clazz_newByteArray(-1, [4, 9, 5, 7, 0, 8, 1, 5, 8, 10, 1, 2, 8, 11, 10, 3]),  Clazz_newByteArray(-1, [5, 4, 0, 3, 5, 0, 11, 0, 5, 11, 10, 6, 11, 0, 3, 6]),  Clazz_newByteArray(-1, [5, 4, 8, 3, 5, 8, 10, 4, 10, 8, 11, 6]),  Clazz_newByteArray(-1, [9, 7, 8, 6, 5, 7, 9, 5]),  Clazz_newByteArray(-1, [9, 3, 0, 6, 9, 5, 3, 1, 5, 7, 3, 3]),  Clazz_newByteArray(-1, [0, 7, 8, 6, 0, 1, 7, 1, 1, 5, 7, 3]),  Clazz_newByteArray(-1, [1, 5, 3, 5, 3, 5, 7, 6]),  Clazz_newByteArray(-1, [9, 7, 8, 6, 9, 5, 7, 3, 10, 1, 2, 7]),  Clazz_newByteArray(-1, [10, 1, 2, 7, 9, 5, 0, 5, 5, 3, 0, 2, 5, 7, 3, 3]),  Clazz_newByteArray(-1, [8, 0, 2, 3, 8, 2, 5, 0, 8, 5, 7, 6, 10, 5, 2, 5]),  Clazz_newByteArray(-1, [2, 10, 5, 3, 2, 5, 3, 4, 3, 5, 7, 6]),  Clazz_newByteArray(-1, [7, 9, 5, 6, 7, 8, 9, 3, 3, 11, 2, 7]),  Clazz_newByteArray(-1, [9, 5, 7, 3, 9, 7, 2, 0, 9, 2, 0, 6, 2, 7, 11, 6]),  Clazz_newByteArray(-1, [2, 3, 11, 7, 0, 1, 8, 5, 1, 7, 8, 2, 1, 5, 7, 3]),  Clazz_newByteArray(-1, [11, 2, 1, 3, 11, 1, 7, 4, 7, 1, 5, 6]),  Clazz_newByteArray(-1, [9, 5, 8, 5, 8, 5, 7, 6, 10, 1, 3, 3, 10, 3, 11, 6]),  Clazz_newByteArray(-1, [5, 7, 0, 1, 5, 0, 9, 6, 7, 11, 0, 1, 1, 0, 10, 5, 11, 10, 0, 1]),  Clazz_newByteArray(-1, [11, 10, 0, 1, 11, 0, 3, 6, 10, 5, 0, 1, 8, 0, 7, 5, 5, 7, 0, 1]),  Clazz_newByteArray(-1, [11, 10, 5, 3, 7, 11, 5, 5]),  Clazz_newByteArray(-1, [10, 6, 5, 7]),  Clazz_newByteArray(-1, [0, 8, 3, 7, 5, 10, 6, 7]),  Clazz_newByteArray(-1, [9, 0, 1, 7, 5, 10, 6, 7]),  Clazz_newByteArray(-1, [1, 8, 3, 6, 1, 9, 8, 3, 5, 10, 6, 7]),  Clazz_newByteArray(-1, [1, 6, 5, 6, 2, 6, 1, 5]),  Clazz_newByteArray(-1, [1, 6, 5, 6, 1, 2, 6, 3, 3, 0, 8, 7]),  Clazz_newByteArray(-1, [9, 6, 5, 6, 9, 0, 6, 1, 0, 2, 6, 3]),  Clazz_newByteArray(-1, [5, 9, 8, 3, 5, 8, 2, 0, 5, 2, 6, 6, 3, 2, 8, 5]),  Clazz_newByteArray(-1, [2, 3, 11, 7, 10, 6, 5, 7]),  Clazz_newByteArray(-1, [11, 0, 8, 6, 11, 2, 0, 3, 10, 6, 5, 7]),  Clazz_newByteArray(-1, [0, 1, 9, 7, 2, 3, 11, 7, 5, 10, 6, 7]),  Clazz_newByteArray(-1, [5, 10, 6, 7, 1, 9, 2, 5, 9, 11, 2, 2, 9, 8, 11, 3]),  Clazz_newByteArray(-1, [6, 3, 11, 6, 6, 5, 3, 1, 5, 1, 3, 3]),  Clazz_newByteArray(-1, [0, 8, 11, 3, 0, 11, 5, 0, 0, 5, 1, 6, 5, 11, 6, 6]),  Clazz_newByteArray(-1, [3, 11, 6, 3, 0, 3, 6, 1, 0, 6, 5, 2, 0, 5, 9, 6]),  Clazz_newByteArray(-1, [6, 5, 9, 3, 6, 9, 11, 4, 11, 9, 8, 6]),  Clazz_newByteArray(-1, [5, 10, 6, 7, 4, 7, 8, 7]),  Clazz_newByteArray(-1, [4, 3, 0, 6, 4, 7, 3, 3, 6, 5, 10, 7]),  Clazz_newByteArray(-1, [1, 9, 0, 7, 5, 10, 6, 7, 8, 4, 7, 7]),  Clazz_newByteArray(-1, [10, 6, 5, 7, 1, 9, 7, 1, 1, 7, 3, 6, 7, 9, 4, 6]),  Clazz_newByteArray(-1, [6, 1, 2, 6, 6, 5, 1, 3, 4, 7, 8, 7]),  Clazz_newByteArray(-1, [1, 2, 5, 5, 5, 2, 6, 6, 3, 0, 4, 3, 3, 4, 7, 6]),  Clazz_newByteArray(-1, [8, 4, 7, 7, 9, 0, 5, 5, 0, 6, 5, 2, 0, 2, 6, 3]),  Clazz_newByteArray(-1, [7, 3, 9, 1, 7, 9, 4, 6, 3, 2, 9, 1, 5, 9, 6, 5, 2, 6, 9, 1]),  Clazz_newByteArray(-1, [3, 11, 2, 7, 7, 8, 4, 7, 10, 6, 5, 7]),  Clazz_newByteArray(-1, [5, 10, 6, 7, 4, 7, 2, 1, 4, 2, 0, 6, 2, 7, 11, 6]),  Clazz_newByteArray(-1, [0, 1, 9, 7, 4, 7, 8, 7, 2, 3, 11, 7, 5, 10, 6, 7]),  Clazz_newByteArray(-1, [9, 2, 1, 6, 9, 11, 2, 2, 9, 4, 11, 1, 7, 11, 4, 5, 5, 10, 6, 7]),  Clazz_newByteArray(-1, [8, 4, 7, 7, 3, 11, 5, 1, 3, 5, 1, 6, 5, 11, 6, 6]),  Clazz_newByteArray(-1, [5, 1, 11, 1, 5, 11, 6, 6, 1, 0, 11, 1, 7, 11, 4, 5, 0, 4, 11, 1]),  Clazz_newByteArray(-1, [0, 5, 9, 6, 0, 6, 5, 2, 0, 3, 6, 1, 11, 6, 3, 5, 8, 4, 7, 7]),  Clazz_newByteArray(-1, [6, 5, 9, 3, 6, 9, 11, 4, 4, 7, 9, 5, 7, 11, 9, 1]),  Clazz_newByteArray(-1, [10, 4, 9, 6, 6, 4, 10, 5]),  Clazz_newByteArray(-1, [4, 10, 6, 6, 4, 9, 10, 3, 0, 8, 3, 7]),  Clazz_newByteArray(-1, [10, 0, 1, 6, 10, 6, 0, 1, 6, 4, 0, 3]),  Clazz_newByteArray(-1, [8, 3, 1, 3, 8, 1, 6, 0, 8, 6, 4, 6, 6, 1, 10, 6]),  Clazz_newByteArray(-1, [1, 4, 9, 6, 1, 2, 4, 1, 2, 6, 4, 3]),  Clazz_newByteArray(-1, [3, 0, 8, 7, 1, 2, 9, 5, 2, 4, 9, 2, 2, 6, 4, 3]),  Clazz_newByteArray(-1, [0, 2, 4, 5, 4, 2, 6, 6]),  Clazz_newByteArray(-1, [8, 3, 2, 3, 8, 2, 4, 4, 4, 2, 6, 6]),  Clazz_newByteArray(-1, [10, 4, 9, 6, 10, 6, 4, 3, 11, 2, 3, 7]),  Clazz_newByteArray(-1, [0, 8, 2, 5, 2, 8, 11, 6, 4, 9, 10, 3, 4, 10, 6, 6]),  Clazz_newByteArray(-1, [3, 11, 2, 7, 0, 1, 6, 1, 0, 6, 4, 6, 6, 1, 10, 6]),  Clazz_newByteArray(-1, [6, 4, 1, 1, 6, 1, 10, 6, 4, 8, 1, 1, 2, 1, 11, 5, 8, 11, 1, 1]),  Clazz_newByteArray(-1, [9, 6, 4, 6, 9, 3, 6, 0, 9, 1, 3, 3, 11, 6, 3, 5]),  Clazz_newByteArray(-1, [8, 11, 1, 1, 8, 1, 0, 6, 11, 6, 1, 1, 9, 1, 4, 5, 6, 4, 1, 1]),  Clazz_newByteArray(-1, [3, 11, 6, 3, 3, 6, 0, 4, 0, 6, 4, 6]),  Clazz_newByteArray(-1, [6, 4, 8, 3, 11, 6, 8, 5]),  Clazz_newByteArray(-1, [7, 10, 6, 6, 7, 8, 10, 1, 8, 9, 10, 3]),  Clazz_newByteArray(-1, [0, 7, 3, 6, 0, 10, 7, 0, 0, 9, 10, 3, 6, 7, 10, 5]),  Clazz_newByteArray(-1, [10, 6, 7, 3, 1, 10, 7, 1, 1, 7, 8, 2, 1, 8, 0, 6]),  Clazz_newByteArray(-1, [10, 6, 7, 3, 10, 7, 1, 4, 1, 7, 3, 6]),  Clazz_newByteArray(-1, [1, 2, 6, 3, 1, 6, 8, 0, 1, 8, 9, 6, 8, 6, 7, 6]),  Clazz_newByteArray(-1, [2, 6, 9, 1, 2, 9, 1, 6, 6, 7, 9, 1, 0, 9, 3, 5, 7, 3, 9, 1]),  Clazz_newByteArray(-1, [7, 8, 0, 3, 7, 0, 6, 4, 6, 0, 2, 6]),  Clazz_newByteArray(-1, [7, 3, 2, 3, 6, 7, 2, 5]),  Clazz_newByteArray(-1, [2, 3, 11, 7, 10, 6, 8, 1, 10, 8, 9, 6, 8, 6, 7, 6]),  Clazz_newByteArray(-1, [2, 0, 7, 1, 2, 7, 11, 6, 0, 9, 7, 1, 6, 7, 10, 5, 9, 10, 7, 1]),  Clazz_newByteArray(-1, [1, 8, 0, 6, 1, 7, 8, 2, 1, 10, 7, 1, 6, 7, 10, 5, 2, 3, 11, 7]),  Clazz_newByteArray(-1, [11, 2, 1, 3, 11, 1, 7, 4, 10, 6, 1, 5, 6, 7, 1, 1]),  Clazz_newByteArray(-1, [8, 9, 6, 1, 8, 6, 7, 6, 9, 1, 6, 1, 11, 6, 3, 5, 1, 3, 6, 1]),  Clazz_newByteArray(-1, [0, 9, 1, 7, 11, 6, 7, 7]),  Clazz_newByteArray(-1, [7, 8, 0, 3, 7, 0, 6, 4, 3, 11, 0, 5, 11, 6, 0, 1]),  Clazz_newByteArray(-1, [7, 11, 6, 7]),  Clazz_newByteArray(-1, [7, 6, 11, 7]),  Clazz_newByteArray(-1, [3, 0, 8, 7, 11, 7, 6, 7]),  Clazz_newByteArray(-1, [0, 1, 9, 7, 11, 7, 6, 7]),  Clazz_newByteArray(-1, [8, 1, 9, 6, 8, 3, 1, 3, 11, 7, 6, 7]),  Clazz_newByteArray(-1, [10, 1, 2, 7, 6, 11, 7, 7]),  Clazz_newByteArray(-1, [1, 2, 10, 7, 3, 0, 8, 7, 6, 11, 7, 7]),  Clazz_newByteArray(-1, [2, 9, 0, 6, 2, 10, 9, 3, 6, 11, 7, 7]),  Clazz_newByteArray(-1, [6, 11, 7, 7, 2, 10, 3, 5, 10, 8, 3, 2, 10, 9, 8, 3]),  Clazz_newByteArray(-1, [7, 2, 3, 6, 6, 2, 7, 5]),  Clazz_newByteArray(-1, [7, 0, 8, 6, 7, 6, 0, 1, 6, 2, 0, 3]),  Clazz_newByteArray(-1, [2, 7, 6, 6, 2, 3, 7, 3, 0, 1, 9, 7]),  Clazz_newByteArray(-1, [1, 6, 2, 6, 1, 8, 6, 0, 1, 9, 8, 3, 8, 7, 6, 3]),  Clazz_newByteArray(-1, [10, 7, 6, 6, 10, 1, 7, 1, 1, 3, 7, 3]),  Clazz_newByteArray(-1, [10, 7, 6, 6, 1, 7, 10, 4, 1, 8, 7, 2, 1, 0, 8, 3]),  Clazz_newByteArray(-1, [0, 3, 7, 3, 0, 7, 10, 0, 0, 10, 9, 6, 6, 10, 7, 5]),  Clazz_newByteArray(-1, [7, 6, 10, 3, 7, 10, 8, 4, 8, 10, 9, 6]),  Clazz_newByteArray(-1, [6, 8, 4, 6, 11, 8, 6, 5]),  Clazz_newByteArray(-1, [3, 6, 11, 6, 3, 0, 6, 1, 0, 4, 6, 3]),  Clazz_newByteArray(-1, [8, 6, 11, 6, 8, 4, 6, 3, 9, 0, 1, 7]),  Clazz_newByteArray(-1, [9, 4, 6, 3, 9, 6, 3, 0, 9, 3, 1, 6, 11, 3, 6, 5]),  Clazz_newByteArray(-1, [6, 8, 4, 6, 6, 11, 8, 3, 2, 10, 1, 7]),  Clazz_newByteArray(-1, [1, 2, 10, 7, 3, 0, 11, 5, 0, 6, 11, 2, 0, 4, 6, 3]),  Clazz_newByteArray(-1, [4, 11, 8, 6, 4, 6, 11, 3, 0, 2, 9, 5, 2, 10, 9, 3]),  Clazz_newByteArray(-1, [10, 9, 3, 1, 10, 3, 2, 6, 9, 4, 3, 1, 11, 3, 6, 5, 4, 6, 3, 1]),  Clazz_newByteArray(-1, [8, 2, 3, 6, 8, 4, 2, 1, 4, 6, 2, 3]),  Clazz_newByteArray(-1, [0, 4, 2, 5, 4, 6, 2, 3]),  Clazz_newByteArray(-1, [1, 9, 0, 7, 2, 3, 4, 1, 2, 4, 6, 6, 4, 3, 8, 6]),  Clazz_newByteArray(-1, [1, 9, 4, 3, 1, 4, 2, 4, 2, 4, 6, 6]),  Clazz_newByteArray(-1, [8, 1, 3, 6, 8, 6, 1, 0, 8, 4, 6, 3, 6, 10, 1, 3]),  Clazz_newByteArray(-1, [10, 1, 0, 3, 10, 0, 6, 4, 6, 0, 4, 6]),  Clazz_newByteArray(-1, [4, 6, 3, 1, 4, 3, 8, 6, 6, 10, 3, 1, 0, 3, 9, 5, 10, 9, 3, 1]),  Clazz_newByteArray(-1, [10, 9, 4, 3, 6, 10, 4, 5]),  Clazz_newByteArray(-1, [4, 9, 5, 7, 7, 6, 11, 7]),  Clazz_newByteArray(-1, [0, 8, 3, 7, 4, 9, 5, 7, 11, 7, 6, 7]),  Clazz_newByteArray(-1, [5, 0, 1, 6, 5, 4, 0, 3, 7, 6, 11, 7]),  Clazz_newByteArray(-1, [11, 7, 6, 7, 8, 3, 4, 5, 3, 5, 4, 2, 3, 1, 5, 3]),  Clazz_newByteArray(-1, [9, 5, 4, 7, 10, 1, 2, 7, 7, 6, 11, 7]),  Clazz_newByteArray(-1, [6, 11, 7, 7, 1, 2, 10, 7, 0, 8, 3, 7, 4, 9, 5, 7]),  Clazz_newByteArray(-1, [7, 6, 11, 7, 5, 4, 10, 5, 4, 2, 10, 2, 4, 0, 2, 3]),  Clazz_newByteArray(-1, [3, 4, 8, 6, 3, 5, 4, 2, 3, 2, 5, 1, 10, 5, 2, 5, 11, 7, 6, 7]),  Clazz_newByteArray(-1, [7, 2, 3, 6, 7, 6, 2, 3, 5, 4, 9, 7]),  Clazz_newByteArray(-1, [9, 5, 4, 7, 0, 8, 6, 1, 0, 6, 2, 6, 6, 8, 7, 6]),  Clazz_newByteArray(-1, [3, 6, 2, 6, 3, 7, 6, 3, 1, 5, 0, 5, 5, 4, 0, 3]),  Clazz_newByteArray(-1, [6, 2, 8, 1, 6, 8, 7, 6, 2, 1, 8, 1, 4, 8, 5, 5, 1, 5, 8, 1]),  Clazz_newByteArray(-1, [9, 5, 4, 7, 10, 1, 6, 5, 1, 7, 6, 2, 1, 3, 7, 3]),  Clazz_newByteArray(-1, [1, 6, 10, 6, 1, 7, 6, 2, 1, 0, 7, 1, 8, 7, 0, 5, 9, 5, 4, 7]),  Clazz_newByteArray(-1, [4, 0, 10, 1, 4, 10, 5, 6, 0, 3, 10, 1, 6, 10, 7, 5, 3, 7, 10, 1]),  Clazz_newByteArray(-1, [7, 6, 10, 3, 7, 10, 8, 4, 5, 4, 10, 5, 4, 8, 10, 1]),  Clazz_newByteArray(-1, [6, 9, 5, 6, 6, 11, 9, 1, 11, 8, 9, 3]),  Clazz_newByteArray(-1, [3, 6, 11, 6, 0, 6, 3, 4, 0, 5, 6, 2, 0, 9, 5, 3]),  Clazz_newByteArray(-1, [0, 11, 8, 6, 0, 5, 11, 0, 0, 1, 5, 3, 5, 6, 11, 3]),  Clazz_newByteArray(-1, [6, 11, 3, 3, 6, 3, 5, 4, 5, 3, 1, 6]),  Clazz_newByteArray(-1, [1, 2, 10, 7, 9, 5, 11, 1, 9, 11, 8, 6, 11, 5, 6, 6]),  Clazz_newByteArray(-1, [0, 11, 3, 6, 0, 6, 11, 2, 0, 9, 6, 1, 5, 6, 9, 5, 1, 2, 10, 7]),  Clazz_newByteArray(-1, [11, 8, 5, 1, 11, 5, 6, 6, 8, 0, 5, 1, 10, 5, 2, 5, 0, 2, 5, 1]),  Clazz_newByteArray(-1, [6, 11, 3, 3, 6, 3, 5, 4, 2, 10, 3, 5, 10, 5, 3, 1]),  Clazz_newByteArray(-1, [5, 8, 9, 6, 5, 2, 8, 0, 5, 6, 2, 3, 3, 8, 2, 5]),  Clazz_newByteArray(-1, [9, 5, 6, 3, 9, 6, 0, 4, 0, 6, 2, 6]),  Clazz_newByteArray(-1, [1, 5, 8, 1, 1, 8, 0, 6, 5, 6, 8, 1, 3, 8, 2, 5, 6, 2, 8, 1]),  Clazz_newByteArray(-1, [1, 5, 6, 3, 2, 1, 6, 5]),  Clazz_newByteArray(-1, [1, 3, 6, 1, 1, 6, 10, 6, 3, 8, 6, 1, 5, 6, 9, 5, 8, 9, 6, 1]),  Clazz_newByteArray(-1, [10, 1, 0, 3, 10, 0, 6, 4, 9, 5, 0, 5, 5, 6, 0, 1]),  Clazz_newByteArray(-1, [0, 3, 8, 7, 5, 6, 10, 7]),  Clazz_newByteArray(-1, [10, 5, 6, 7]),  Clazz_newByteArray(-1, [11, 5, 10, 6, 7, 5, 11, 5]),  Clazz_newByteArray(-1, [11, 5, 10, 6, 11, 7, 5, 3, 8, 3, 0, 7]),  Clazz_newByteArray(-1, [5, 11, 7, 6, 5, 10, 11, 3, 1, 9, 0, 7]),  Clazz_newByteArray(-1, [10, 7, 5, 6, 10, 11, 7, 3, 9, 8, 1, 5, 8, 3, 1, 3]),  Clazz_newByteArray(-1, [11, 1, 2, 6, 11, 7, 1, 1, 7, 5, 1, 3]),  Clazz_newByteArray(-1, [0, 8, 3, 7, 1, 2, 7, 1, 1, 7, 5, 6, 7, 2, 11, 6]),  Clazz_newByteArray(-1, [9, 7, 5, 6, 9, 2, 7, 0, 9, 0, 2, 3, 2, 11, 7, 3]),  Clazz_newByteArray(-1, [7, 5, 2, 1, 7, 2, 11, 6, 5, 9, 2, 1, 3, 2, 8, 5, 9, 8, 2, 1]),  Clazz_newByteArray(-1, [2, 5, 10, 6, 2, 3, 5, 1, 3, 7, 5, 3]),  Clazz_newByteArray(-1, [8, 2, 0, 6, 8, 5, 2, 0, 8, 7, 5, 3, 10, 2, 5, 5]),  Clazz_newByteArray(-1, [9, 0, 1, 7, 5, 10, 3, 1, 5, 3, 7, 6, 3, 10, 2, 6]),  Clazz_newByteArray(-1, [9, 8, 2, 1, 9, 2, 1, 6, 8, 7, 2, 1, 10, 2, 5, 5, 7, 5, 2, 1]),  Clazz_newByteArray(-1, [1, 3, 5, 5, 3, 7, 5, 3]),  Clazz_newByteArray(-1, [0, 8, 7, 3, 0, 7, 1, 4, 1, 7, 5, 6]),  Clazz_newByteArray(-1, [9, 0, 3, 3, 9, 3, 5, 4, 5, 3, 7, 6]),  Clazz_newByteArray(-1, [9, 8, 7, 3, 5, 9, 7, 5]),  Clazz_newByteArray(-1, [5, 8, 4, 6, 5, 10, 8, 1, 10, 11, 8, 3]),  Clazz_newByteArray(-1, [5, 0, 4, 6, 5, 11, 0, 0, 5, 10, 11, 3, 11, 3, 0, 3]),  Clazz_newByteArray(-1, [0, 1, 9, 7, 8, 4, 10, 1, 8, 10, 11, 6, 10, 4, 5, 6]),  Clazz_newByteArray(-1, [10, 11, 4, 1, 10, 4, 5, 6, 11, 3, 4, 1, 9, 4, 1, 5, 3, 1, 4, 1]),  Clazz_newByteArray(-1, [2, 5, 1, 6, 2, 8, 5, 0, 2, 11, 8, 3, 4, 5, 8, 5]),  Clazz_newByteArray(-1, [0, 4, 11, 1, 0, 11, 3, 6, 4, 5, 11, 1, 2, 11, 1, 5, 5, 1, 11, 1]),  Clazz_newByteArray(-1, [0, 2, 5, 1, 0, 5, 9, 6, 2, 11, 5, 1, 4, 5, 8, 5, 11, 8, 5, 1]),  Clazz_newByteArray(-1, [9, 4, 5, 7, 2, 11, 3, 7]),  Clazz_newByteArray(-1, [2, 5, 10, 6, 3, 5, 2, 4, 3, 4, 5, 2, 3, 8, 4, 3]),  Clazz_newByteArray(-1, [5, 10, 2, 3, 5, 2, 4, 4, 4, 2, 0, 6]),  Clazz_newByteArray(-1, [3, 10, 2, 6, 3, 5, 10, 2, 3, 8, 5, 1, 4, 5, 8, 5, 0, 1, 9, 7]),  Clazz_newByteArray(-1, [5, 10, 2, 3, 5, 2, 4, 4, 1, 9, 2, 5, 9, 4, 2, 1]),  Clazz_newByteArray(-1, [8, 4, 5, 3, 8, 5, 3, 4, 3, 5, 1, 6]),  Clazz_newByteArray(-1, [0, 4, 5, 3, 1, 0, 5, 5]),  Clazz_newByteArray(-1, [8, 4, 5, 3, 8, 5, 3, 4, 9, 0, 5, 5, 0, 3, 5, 1]),  Clazz_newByteArray(-1, [9, 4, 5, 7]),  Clazz_newByteArray(-1, [4, 11, 7, 6, 4, 9, 11, 1, 9, 10, 11, 3]),  Clazz_newByteArray(-1, [0, 8, 3, 7, 4, 9, 7, 5, 9, 11, 7, 2, 9, 10, 11, 3]),  Clazz_newByteArray(-1, [1, 10, 11, 3, 1, 11, 4, 0, 1, 4, 0, 6, 7, 4, 11, 5]),  Clazz_newByteArray(-1, [3, 1, 4, 1, 3, 4, 8, 6, 1, 10, 4, 1, 7, 4, 11, 5, 10, 11, 4, 1]),  Clazz_newByteArray(-1, [4, 11, 7, 6, 9, 11, 4, 4, 9, 2, 11, 2, 9, 1, 2, 3]),  Clazz_newByteArray(-1, [9, 7, 4, 6, 9, 11, 7, 2, 9, 1, 11, 1, 2, 11, 1, 5, 0, 8, 3, 7]),  Clazz_newByteArray(-1, [11, 7, 4, 3, 11, 4, 2, 4, 2, 4, 0, 6]),  Clazz_newByteArray(-1, [11, 7, 4, 3, 11, 4, 2, 4, 8, 3, 4, 5, 3, 2, 4, 1]),  Clazz_newByteArray(-1, [2, 9, 10, 6, 2, 7, 9, 0, 2, 3, 7, 3, 7, 4, 9, 3]),  Clazz_newByteArray(-1, [9, 10, 7, 1, 9, 7, 4, 6, 10, 2, 7, 1, 8, 7, 0, 5, 2, 0, 7, 1]),  Clazz_newByteArray(-1, [3, 7, 10, 1, 3, 10, 2, 6, 7, 4, 10, 1, 1, 10, 0, 5, 4, 0, 10, 1]),  Clazz_newByteArray(-1, [1, 10, 2, 7, 8, 7, 4, 7]),  Clazz_newByteArray(-1, [4, 9, 1, 3, 4, 1, 7, 4, 7, 1, 3, 6]),  Clazz_newByteArray(-1, [4, 9, 1, 3, 4, 1, 7, 4, 0, 8, 1, 5, 8, 7, 1, 1]),  Clazz_newByteArray(-1, [4, 0, 3, 3, 7, 4, 3, 5]),  Clazz_newByteArray(-1, [4, 8, 7, 7]),  Clazz_newByteArray(-1, [9, 10, 8, 5, 10, 11, 8, 3]),  Clazz_newByteArray(-1, [3, 0, 9, 3, 3, 9, 11, 4, 11, 9, 10, 6]),  Clazz_newByteArray(-1, [0, 1, 10, 3, 0, 10, 8, 4, 8, 10, 11, 6]),  Clazz_newByteArray(-1, [3, 1, 10, 3, 11, 3, 10, 5]),  Clazz_newByteArray(-1, [1, 2, 11, 3, 1, 11, 9, 4, 9, 11, 8, 6]),  Clazz_newByteArray(-1, [3, 0, 9, 3, 3, 9, 11, 4, 1, 2, 9, 5, 2, 11, 9, 1]),  Clazz_newByteArray(-1, [0, 2, 11, 3, 8, 0, 11, 5]),  Clazz_newByteArray(-1, [3, 2, 11, 7]),  Clazz_newByteArray(-1, [2, 3, 8, 3, 2, 8, 10, 4, 10, 8, 9, 6]),  Clazz_newByteArray(-1, [9, 10, 2, 3, 0, 9, 2, 5]),  Clazz_newByteArray(-1, [2, 3, 8, 3, 2, 8, 10, 4, 0, 1, 8, 5, 1, 10, 8, 1]),  Clazz_newByteArray(-1, [1, 10, 2, 7]),  Clazz_newByteArray(-1, [1, 3, 8, 3, 9, 1, 8, 5]),  Clazz_newByteArray(-1, [0, 9, 1, 7]),  Clazz_newByteArray(-1, [0, 3, 8, 7]), null]);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.jvxl.api");
 Clazz_declareInterface(J.jvxl.api, "VertexDataServer");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.jvxl.api");
 Clazz_declareInterface(J.jvxl.api, "MeshDataServer", J.jvxl.api.VertexDataServer);
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.shapesurface");
 Clazz_load(["J.jvxl.api.MeshDataServer", "J.shape.MeshCollection", "JU.P4"], "J.shapesurface.Isosurface", ["java.util.Hashtable", "JU.A4", "$.AU", "$.BS", "$.CU", "$.Lst", "$.M3", "$.M4", "$.P3", "$.PT", "$.Quat", "$.Rdr", "$.SB", "$.V3", "J.jvxl.data.JvxlCoder", "$.JvxlData", "$.MeshData", "J.jvxl.readers.SurfaceGenerator", "J.shape.Mesh", "J.shapesurface.IsosurfaceMesh", "JU.C", "$.Escape", "$.GData", "$.Logger", "JV.JC", "$.Viewer"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -3903,6 +3927,7 @@ this.isWithinNot = false;
 this.withinPoints = null;
 this.cutoffRange = null;
 this.allowMesh = true;
+this.haveCached = false;
 this.script = null;
 this.iHaveModelIndex = false;
 this.nLCAO = 0;
@@ -3960,21 +3985,10 @@ this.setPropI("thisID", mesh0.thisID, null);
 }return;
 }if ("cache" === propertyName) {
 if (this.currentMesh == null) return;
-var imodel = this.currentMesh.modelIndex;
-var id = this.currentMesh.thisID;
-var fname = "cache://isosurface_" + id;
-var jvxl = (this.getPropI("jvxlDataXml", -1));
-this.vwr.cachePut(fname, jvxl.getBytes());
-this.deleteMeshI(this.currentMesh.index);
-this.setPropI("init", null, null);
-this.setPropI("thisID", id, null);
-this.setPropI("modelIndex", Integer.$valueOf(imodel), null);
-this.setPropI("fileName", fname, null);
-this.setPropI("readFile", null, null);
-this.setPropI("finalize", "isosurface ID " + JU.PT.esc(id) + (imodel >= 0 ? " modelIndex " + imodel : "") + " /*file*/" + JU.PT.esc(fname), null);
-this.setPropI("clear", null, null);
+this.cacheIsosurface();
 return;
 }if ("delete" === propertyName) {
+if (this.thisMesh != null && this.haveCached) this.vwr.cachePut("cache://" + this.thisMesh.getDataName(), null);
 this.setPropertySuper(propertyName, value, bs);
 if (!this.explicitID) this.nLCAO = this.nUnnamed = 0;
 this.currentMesh = this.thisMesh = null;
@@ -3994,7 +4008,8 @@ return;
 }if ("pymolparams" === propertyName) {
 if (this.thisMesh != null) {
 this.ensureMeshSource();
-this.thisMesh.setPymolVertexColixesForAtoms(this.vwr, value, bs);
+var needToCache = this.thisMesh.setPymolVertexColixesForAtoms(this.vwr, value, bs);
+if (needToCache) this.cacheIsosurface();
 }return;
 }if ("atomcolor" === propertyName) {
 if (this.thisMesh != null) {
@@ -4289,6 +4304,24 @@ if (m.atomIndex >= firstAtomDeleted) m.atomIndex -= nAtomsDeleted;
 return;
 }this.setPropertySuper(propertyName, value, bs);
 }, "~S,~O,JU.BS");
+Clazz_defineMethod(c$, "cacheIsosurface", 
+function(){
+this.haveCached = true;
+var imodel = this.currentMesh.modelIndex;
+var id = this.currentMesh.thisID;
+var jvxl = (this.getPropI("jvxlDataXml", -1));
+var cacheName = this.thisMesh.getDataName();
+var fname = "cache://" + cacheName;
+this.vwr.cachePut(fname, jvxl.getBytes());
+this.deleteMeshI(this.currentMesh.index);
+this.setPropI("init", null, null);
+this.setPropI("thisID", id, null);
+this.setPropI("modelIndex", Integer.$valueOf(imodel), null);
+this.setPropI("fileName", fname, null);
+this.setPropI("readFile", null, null);
+this.setPropI("finalize", "isosurface ID " + JU.PT.esc(id) + (imodel >= 0 ? " modelIndex " + imodel : "") + " /*file*/" + JU.PT.esc(fname), null);
+this.setPropI("clear", null, null);
+});
 Clazz_defineMethod(c$, "getFileReader", 
 function(fileName){
 var value = this.vwr.fm.getBufferedReaderOrErrorMessageFromName(fileName, null, true, true);
@@ -4547,15 +4580,21 @@ var pt = cmd.indexOf("; #");
 if (pt >= 0) cmd = cmd.substring(0, pt);
 if (imesh.connectedAtoms != null) cmd += " connect " + JU.Escape.eAI(imesh.connectedAtoms);
 cmd = JU.PT.trim(cmd, ";");
+var writeJVXL = false;
 if (cmd.indexOf("cache://") >= 0) {
-var id = imesh.thisID;
-var jvxlID = "isosurface_" + id;
-var fname = "cache://isosurface_" + id;
-var o = this.vwr.fm.cacheGet(fname, false);
+var dataName = imesh.getDataName();
+var cacheName = "cache://" + dataName;
+var old = "/*file*/" + JU.PT.esc(cacheName);
+pt = cmd.indexOf(old);
+if (pt < 0) {
+System.err.println("Isosurface no cache string found in command " + old);
+} else {
+var o = this.vwr.fm.cacheGet(cacheName, false);
 if (JU.AU.isAB(o)) o =  String.instantialize(o);
-var jvxl = " data " + JU.PT.esc(jvxlID) + o + "end " + JU.PT.esc(jvxlID);
-cmd = JU.PT.rep(cmd, "/*file*/" + JU.PT.esc(fname), jvxl);
-}if (imesh.linkedMesh != null) cmd += " LINK";
+var jvxl = " data " + JU.PT.esc(dataName) + o + "end " + JU.PT.esc(dataName);
+cmd = cmd.substring(0, pt) + jvxl + cmd.substring(pt + old.length);
+writeJVXL = true;
+}}if (imesh.linkedMesh != null) cmd += " LINK";
 if (this.myType === "lcaoCartoon" && imesh.atomIndex >= 0) cmd += " ATOMINDEX " + imesh.atomIndex;
 J.shape.Shape.appendCmd(sb, cmd);
 var id = this.myType + " ID " + JU.PT.esc(imesh.thisID);
@@ -4568,7 +4607,7 @@ if (imesh.slabOptions != null) J.shape.Shape.appendCmd(sb, imesh.slabOptions.toS
 if (cmd.charAt(0) != '#') {
 if (this.allowMesh) J.shape.Shape.appendCmd(sb, imesh.getState(this.myType));
 if (!imesh.isColorSolid && imesh.colorType == 0 && JU.C.isColixTranslucent(imesh.colix)) J.shape.Shape.appendCmd(sb, "color " + this.myType + " " + J.shape.Shape.getTranslucentLabel(imesh.colix));
-if (imesh.colorCommand != null && imesh.colorType == 0 && !imesh.colorCommand.equals("#inherit;")) {
+if (!writeJVXL && imesh.colorCommand != null && imesh.colorType == 0 && !imesh.colorCommand.equals("#inherit;")) {
 J.shape.Shape.appendCmd(sb, imesh.colorCommand);
 }var colorArrayed = (imesh.isColorSolid && imesh.pcs != null);
 if (imesh.isColorSolid && imesh.colorType == 0 && !imesh.colorsExplicit && !colorArrayed) {
@@ -4899,7 +4938,7 @@ this.setBsVdw();
 this.thisMesh.isColorSolid = false;
 this.thisMesh.colorDensity = this.jvxlData.colorDensity;
 this.thisMesh.volumeRenderPointSize = this.jvxlData.pointSize;
-this.thisMesh.colorEncoder = this.sg.params.colorEncoder;
+this.thisMesh.colorEncoder = (this.jvxlData.vertexColorMap == null ? this.sg.params.colorEncoder : null);
 this.thisMesh.getContours();
 if (this.thisMesh.jvxlData.nContours != 0 && this.thisMesh.jvxlData.nContours != -1) this.explicitContours = true;
 if (this.explicitContours && this.thisMesh.jvxlData.jvxlPlane != null) this.thisMesh.havePlanarContours = true;
@@ -5137,10 +5176,21 @@ function(mesh){
 return (mesh == null ? null : (mesh).getValidVertices(null));
 }, "J.shape.Mesh");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026
 Clazz_declarePackage("J.jvxl.data");
 Clazz_load(null, "J.jvxl.data.JvxlCoder", ["JU.BS", "$.Lst", "$.P3", "$.PT", "$.SB", "J.api.Interface", "J.jvxl.data.VolumeData", "JU.BSUtil", "$.C", "$.Escape", "$.Logger", "JV.Viewer"], function(){
 var c$ = Clazz_declareType(J.jvxl.data, "JvxlCoder", null);
+/*LV!1824 unnec constructor*/Clazz_defineMethod(c$, "jvxlEncodeBitSet90_35", 
+function(bs){
+var sb =  new JU.SB();
+sb.append(";base90+35,");
+J.jvxl.data.JvxlCoder.jvxlEncodeBitSetBuffer(bs, -1, sb);
+return sb.toString();
+}, "JU.BS");
+Clazz_defineMethod(c$, "jvxlDecodeBitSet90_35", 
+function(data){
+return J.jvxl.data.JvxlCoder.jvxlDecodeBitPtSetRange(data, 12, 35, 90);
+}, "~S");
 c$.jvxlGetFile = Clazz_defineMethod(c$, "jvxlGetFile", 
 function(jvxlData, meshData, title, msg, includeHeader, nSurfaces, state, comment){
 if (state != null && state.indexOf("<jvxl") >= 0) state = "";
@@ -5221,7 +5271,8 @@ if (count == 0) return;
 var sb1 =  new JU.SB();
 sb1.append("\n ");
 J.jvxl.data.JvxlCoder.jvxlEncodeBitSetBuffer(bs, -1, sb1);
-JU.XmlUtil.appendTagObj(sb, name,  Clazz_newArray(-1, [attribs, "bsEncoding", "base90+35", "count", "" + count, "len", "" + bs.length()]), J.jvxl.data.JvxlCoder.jvxlCompressString(sb1.toString(), true));
+var data = J.jvxl.data.JvxlCoder.jvxlCompressString(sb1.toString(), true);
+JU.XmlUtil.appendTagObj(sb, name,  Clazz_newArray(-1, [attribs, "bsEncoding", "base90+35", "count", "" + count, "len", "" + bs.length()]), data);
 }, "JU.SB,~S,JU.BS,~N,~A");
 c$.jvxlSetCompressionRatio = Clazz_defineMethod(c$, "jvxlSetCompressionRatio", 
 function(data, jvxlData, len){
@@ -5309,6 +5360,7 @@ J.jvxl.data.JvxlCoder.addAttrib(attribs, "\n  plane", JU.Escape.eP4(jvxlData.jvx
 J.jvxl.data.JvxlCoder.addAttrib(attribs, "\n  translucency", "" + jvxlData.translucency);
 if (jvxlData.meshColor != null) J.jvxl.data.JvxlCoder.addAttrib(attribs, "\n  meshColor", jvxlData.meshColor);
 if (jvxlData.colorScheme != null) J.jvxl.data.JvxlCoder.addAttrib(attribs, "\n  colorScheme", jvxlData.colorScheme);
+var colorInherited = "inherit".equals(jvxlData.colorScheme);
 if (jvxlData.rendering != null) J.jvxl.data.JvxlCoder.addAttrib(attribs, "\n  rendering", jvxlData.rendering);
 if (jvxlData.thisSet != null) {
 var s = J.jvxl.data.JvxlCoder.subsetString(jvxlData.thisSet);
@@ -5320,7 +5372,7 @@ if (jvxlData.nVertexColors > 0) J.jvxl.data.JvxlCoder.addAttrib(attribs, "\n  nV
 var min = (jvxlData.mappedDataMin == 3.4028235E38 ? 0 : jvxlData.mappedDataMin);
 var blue = (jvxlData.isColorReversed ? jvxlData.valueMappedToRed : jvxlData.valueMappedToBlue);
 var red = (jvxlData.isColorReversed ? jvxlData.valueMappedToBlue : jvxlData.valueMappedToRed);
-if (jvxlData.jvxlColorData != null && jvxlData.jvxlColorData.length > 0 && !jvxlData.isBicolorMap) {
+if (jvxlData.jvxlColorData != null && jvxlData.jvxlColorData.length > 0 && !jvxlData.isBicolorMap && !colorInherited) {
 J.jvxl.data.JvxlCoder.addAttrib(attribs, "\n  dataMinimum", "" + min);
 J.jvxl.data.JvxlCoder.addAttrib(attribs, "\n  dataMaximum", "" + jvxlData.mappedDataMax);
 J.jvxl.data.JvxlCoder.addAttrib(attribs, "\n  valueMappedToRed", "" + red);
@@ -5629,12 +5681,6 @@ isset = !isset;
 sb.appendC(' ').appendI(dataCount).appendC('\n');
 return n;
 }, "JU.BS,~N,JU.SB");
-c$.jvxlEncodeBitSet = Clazz_defineMethod(c$, "jvxlEncodeBitSet", 
-function(bs){
-var sb =  new JU.SB();
-J.jvxl.data.JvxlCoder.jvxlEncodeBitSetBuffer(bs, -1, sb);
-return sb.toString();
-}, "JU.BS");
 c$.jvxlEncodeBitSetBuffer = Clazz_defineMethod(c$, "jvxlEncodeBitSetBuffer", 
 function(bs, nPoints, sb){
 var dataCount = 0;
@@ -5672,18 +5718,53 @@ if (!isInRange) sb.append(" ");
 }, "JU.SB,~N,~N,~N");
 c$.jvxlDecodeBitSetRange = Clazz_defineMethod(c$, "jvxlDecodeBitSetRange", 
 function(data, base, range){
+return J.jvxl.data.JvxlCoder.jvxlDecodeBitPtSetRange(data, 0, base, range);
+}, "~S,~N,~N");
+c$.jvxlDecodeBitSet = Clazz_defineMethod(c$, "jvxlDecodeBitSet", 
+function(data){
+var ptr = -1;
+if (data.startsWith("-")) {
+if (data.indexOf("~") >= 0) {
+data = J.jvxl.data.JvxlCoder.jvxlDecompressString(data.substring(1));
+ptr = 0;
+} else {
+ptr = 1;
+}}if (ptr >= 0) return J.jvxl.data.JvxlCoder.jvxlDecodeBitPtSetRange(data, ptr, 35, 90);
+var bs =  new JU.BS();
+var dataCount = 0;
+var lastCount = 0;
+var nPrev = 0;
+ptr = 0;
+var isset = false;
+var next =  Clazz_newIntArray (1, 0);
+while (true) {
+dataCount = (nPrev++ < 0 ? dataCount : JU.PT.parseIntNext(data, next));
+if (dataCount == -2147483648) break;
+if (dataCount < 0) {
+nPrev = dataCount;
+dataCount = lastCount;
+continue;
+}if (isset) bs.setBits(ptr, ptr + dataCount);
+ptr += dataCount;
+lastCount = dataCount;
+isset = !isset;
+}
+return bs;
+}, "~S");
+c$.jvxlDecodeBitPtSetRange = Clazz_defineMethod(c$, "jvxlDecodeBitPtSetRange", 
+function(data, pt, base, range){
 var bs =  new JU.BS();
 var dataCount = 0;
 var ptr = 0;
 var isset = false;
-var next =  Clazz_newIntArray (1, 0);
+var next =  Clazz_newIntArray(-1, [pt]);
 while ((dataCount = J.jvxl.data.JvxlCoder.jvxlParseEncodedInt(data, base, range, next)) != -2147483648) {
 if (isset) bs.setBits(ptr, ptr + dataCount);
 ptr += dataCount;
 isset = !isset;
 }
 return bs;
-}, "~S,~N,~N");
+}, "~S,~N,~N,~N");
 c$.jvxlParseEncodedInt = Clazz_defineMethod(c$, "jvxlParseEncodedInt", 
 function(str, offset, base, next){
 var digitSeen = false;
@@ -5710,30 +5791,6 @@ if (!digitSeen) value = -2147483648;
 next[0] = ich;
 return value;
 }, "~S,~N,~N,~A");
-c$.jvxlDecodeBitSet = Clazz_defineMethod(c$, "jvxlDecodeBitSet", 
-function(data){
-if (data.startsWith("-")) return J.jvxl.data.JvxlCoder.jvxlDecodeBitSetRange(J.jvxl.data.JvxlCoder.jvxlDecompressString(data.substring(1)), 35, 90);
-var bs =  new JU.BS();
-var dataCount = 0;
-var lastCount = 0;
-var nPrev = 0;
-var ptr = 0;
-var isset = false;
-var next =  Clazz_newIntArray (1, 0);
-while (true) {
-dataCount = (nPrev++ < 0 ? dataCount : JU.PT.parseIntNext(data, next));
-if (dataCount == -2147483648) break;
-if (dataCount < 0) {
-nPrev = dataCount;
-dataCount = lastCount;
-continue;
-}if (isset) bs.setBits(ptr, ptr + dataCount);
-ptr += dataCount;
-lastCount = dataCount;
-isset = !isset;
-}
-return bs;
-}, "~S");
 c$.jvxlCompressString = Clazz_defineMethod(c$, "jvxlCompressString", 
 function(data, escapeXml){
 if (data.indexOf("~") >= 0) return data;
@@ -5833,7 +5890,7 @@ if (sb.length() == 0) sb.append("Line 1\nLine 2\n");
 }, "J.jvxl.data.VolumeData,JU.SB");
 c$.haveXMLUtil = false;
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.jvxl.data");
 Clazz_load(["JU.M3", "$.P3", "$.V3"], "J.jvxl.data.VolumeData", ["java.util.Hashtable", "JU.SB", "JU.Escape", "$.Logger"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -6217,7 +6274,7 @@ v = this.lookupInterpolatedVoxelValue(this.ptTemp, false);
 return v0;
 }, "~N,JU.P3,JU.P3,~N,~N,JU.P3");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.jvxl.data");
 Clazz_load(null, "J.jvxl.data.JvxlData", ["JU.SB", "J.jvxl.data.JvxlCoder"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -6306,6 +6363,7 @@ this.fixedLattice = null;
 this.baseColor = null;
 this.integration = NaN;
 this.sbOut = null;
+this.mustCacheForState = false;
 Clazz_instantialize(this, arguments);}, J.jvxl.data, "JvxlData", null);
 Clazz_prepareFields (c$, function(){
 this.jvxlExcluded =  new Array(4);
@@ -6379,7 +6437,7 @@ for (var i = 0, ipt = 0; i < vertexCount; i += vertexIncrement, ipt++) if (Float
 return String.copyValueOf(chars);
 }, "~S,~A,~N,~N,~S");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.jvxl.data");
 Clazz_load(["JU.MeshSurface"], "J.jvxl.data.MeshData", ["java.util.Arrays", "JU.AU", "$.BS", "$.V3", "JU.BSUtil"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -6585,7 +6643,7 @@ return (o1.n > o2.n ? -1 : o1.n < o2.n ? 1 : 0);
 /*eoif4*/})();
 };
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.jvxl.readers");
 Clazz_load(null, "J.jvxl.readers.XmlReader", ["JU.P3", "$.PT", "$.SB", "JU.Escape"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -6714,9 +6772,9 @@ if (this.line == null || this.line.indexOf("</") >= 0 && this.line.indexOf("</")
 return (this.line.indexOf("<" + name) >= 0);
 }, "~S");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.jvxl.readers");
-Clazz_load(["JU.P3", "$.V3"], "J.jvxl.readers.SurfaceGenerator", ["JU.AU", "$.BS", "$.Measure", "$.P4", "$.PT", "$.Rdr", "$.SB", "J.jvxl.data.JvxlCoder", "$.JvxlData", "$.MeshData", "$.VolumeData", "J.jvxl.readers.Parameters", "$.SurfaceReader", "JU.Logger", "JV.FileManager"], function(){
+Clazz_load(["JU.P3", "$.V3"], "J.jvxl.readers.SurfaceGenerator", ["JU.AU", "$.BS", "$.Base64", "$.Measure", "$.P4", "$.PT", "$.Rdr", "$.SB", "J.jvxl.data.JvxlCoder", "$.JvxlData", "$.MeshData", "$.VolumeData", "J.jvxl.readers.Parameters", "$.SurfaceReader", "JU.Logger", "JV.FileManager"], function(){
 var c$ = Clazz_decorateAsClass(function(){
 this.params = null;
 this.jvxlData = null;
@@ -7408,8 +7466,18 @@ return this.newReader("VolumeDataReader");
 }var data = null;
 if ((typeof(value)=='string')) {
 data = value;
+if (data.startsWith(";base64,")) {
+try {
+value =  new JU.Rdr.StreamReader(JU.Rdr.getBIS(JU.Base64.decodeBase64(data)), null);
+} catch (e) {
+if (Clazz_exceptionOf(e, Exception)){
+} else {
+throw e;
+}
+}
+} else {
 value = JU.Rdr.getBR(value);
-}if (Clazz_instanceOf(value,Array)) {
+}}if (Clazz_instanceOf(value,Array)) {
 var a = (value)[0];
 var b =  new Array(a.length);
 for (var i = 0; i < a.length; i++) {
@@ -7579,7 +7647,7 @@ function(){
 return (this.surfaceReader.volumeData == null ? null : this.surfaceReader.volumeData.oabc);
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026
 Clazz_declarePackage("J.jvxl.readers");
 Clazz_load(null, "J.jvxl.readers.Parameters", ["java.util.Hashtable", "JU.A4", "$.Lst", "$.M3", "$.P3", "$.P4", "$.V3", "JU.Escape", "$.Logger"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -8128,7 +8196,7 @@ function(){
 return (this.thePlane != null || this.fullyLit);
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026
 Clazz_declarePackage("J.jvxl.readers");
 Clazz_load(["J.jvxl.api.VertexDataServer", "JU.P3"], "J.jvxl.readers.SurfaceReader", ["JU.AU", "$.BS", "J.jvxl.calc.MarchingCubes", "$.MarchingSquares", "J.jvxl.data.JvxlCoder", "$.MeshData", "JU.BoxInfo", "$.C", "$.ColorEncoder", "$.Escape", "$.Logger"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -8224,7 +8292,7 @@ this.meshData = sg.meshData;
 this.jvxlData = sg.jvxlData;
 this.setVolumeDataV(sg.volumeDataTemp);
 this.meshDataServer = sg.meshDataServer;
-this.cJvxlEdgeNaN = String.fromCharCode(125);
+this.cJvxlEdgeNaN = '}';
 }, "J.jvxl.readers.SurfaceGenerator");
 Clazz_defineMethod(c$, "setOutputChannel", 
 function(out){
@@ -8777,7 +8845,7 @@ return -1;
 });
 c$.colorPhases =  Clazz_newArray(-1, ["_orb", "x", "y", "z", "xy", "yz", "xz", "x2-y2", "z2"]);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.jvxl.calc");
 Clazz_load(["JU.TriangleData", "JU.BS", "$.P3", "$.SB", "$.V3"], "J.jvxl.calc.MarchingCubes", ["J.jvxl.data.JvxlCoder"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -9114,7 +9182,7 @@ c$.cubeVertexVectors =  Clazz_newArray(-1, [JU.V3.new3(0, 0, 0), JU.V3.new3(1, 0
 c$.edgeTypeTable =  Clazz_newIntArray(-1, [0, 2, 0, 2, 0, 2, 0, 2, 1, 1, 1, 1]);
 c$.insideMaskTable =  Clazz_newShortArray(-1, [0x0000, 0x0109, 0x0203, 0x030A, 0x0406, 0x050F, 0x0605, 0x070C, 0x080C, 0x0905, 0x0A0F, 0x0B06, 0x0C0A, 0x0D03, 0x0E09, 0x0F00, 0x0190, 0x0099, 0x0393, 0x029A, 0x0596, 0x049F, 0x0795, 0x069C, 0x099C, 0x0895, 0x0B9F, 0x0A96, 0x0D9A, 0x0C93, 0x0F99, 0x0E90, 0x0230, 0x0339, 0x0033, 0x013A, 0x0636, 0x073F, 0x0435, 0x053C, 0x0A3C, 0x0B35, 0x083F, 0x0936, 0x0E3A, 0x0F33, 0x0C39, 0x0D30, 0x03A0, 0x02A9, 0x01A3, 0x00AA, 0x07A6, 0x06AF, 0x05A5, 0x04AC, 0x0BAC, 0x0AA5, 0x09AF, 0x08A6, 0x0FAA, 0x0EA3, 0x0DA9, 0x0CA0, 0x0460, 0x0569, 0x0663, 0x076A, 0x0066, 0x016F, 0x0265, 0x036C, 0x0C6C, 0x0D65, 0x0E6F, 0x0F66, 0x086A, 0x0963, 0x0A69, 0x0B60, 0x05F0, 0x04F9, 0x07F3, 0x06FA, 0x01F6, 0x00FF, 0x03F5, 0x02FC, 0x0DFC, 0x0CF5, 0x0FFF, 0x0EF6, 0x09FA, 0x08F3, 0x0BF9, 0x0AF0, 0x0650, 0x0759, 0x0453, 0x055A, 0x0256, 0x035F, 0x0055, 0x015C, 0x0E5C, 0x0F55, 0x0C5F, 0x0D56, 0x0A5A, 0x0B53, 0x0859, 0x0950, 0x07C0, 0x06C9, 0x05C3, 0x04CA, 0x03C6, 0x02CF, 0x01C5, 0x00CC, 0x0FCC, 0x0EC5, 0x0DCF, 0x0CC6, 0x0BCA, 0x0AC3, 0x09C9, 0x08C0, 0x08C0, 0x09C9, 0x0AC3, 0x0BCA, 0x0CC6, 0x0DCF, 0x0EC5, 0x0FCC, 0x00CC, 0x01C5, 0x02CF, 0x03C6, 0x04CA, 0x05C3, 0x06C9, 0x07C0, 0x0950, 0x0859, 0x0B53, 0x0A5A, 0x0D56, 0x0C5F, 0x0F55, 0x0E5C, 0x015C, 0x0055, 0x035F, 0x0256, 0x055A, 0x0453, 0x0759, 0x0650, 0x0AF0, 0x0BF9, 0x08F3, 0x09FA, 0x0EF6, 0x0FFF, 0x0CF5, 0x0DFC, 0x02FC, 0x03F5, 0x00FF, 0x01F6, 0x06FA, 0x07F3, 0x04F9, 0x05F0, 0x0B60, 0x0A69, 0x0963, 0x086A, 0x0F66, 0x0E6F, 0x0D65, 0x0C6C, 0x036C, 0x0265, 0x016F, 0x0066, 0x076A, 0x0663, 0x0569, 0x0460, 0x0CA0, 0x0DA9, 0x0EA3, 0x0FAA, 0x08A6, 0x09AF, 0x0AA5, 0x0BAC, 0x04AC, 0x05A5, 0x06AF, 0x07A6, 0x00AA, 0x01A3, 0x02A9, 0x03A0, 0x0D30, 0x0C39, 0x0F33, 0x0E3A, 0x0936, 0x083F, 0x0B35, 0x0A3C, 0x053C, 0x0435, 0x073F, 0x0636, 0x013A, 0x0033, 0x0339, 0x0230, 0x0E90, 0x0F99, 0x0C93, 0x0D9A, 0x0A96, 0x0B9F, 0x0895, 0x099C, 0x069C, 0x0795, 0x049F, 0x0596, 0x029A, 0x0393, 0x0099, 0x0190, 0x0F00, 0x0E09, 0x0D03, 0x0C0A, 0x0B06, 0x0A0F, 0x0905, 0x080C, 0x070C, 0x0605, 0x050F, 0x0406, 0x030A, 0x0203, 0x0109, 0x0000]);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.jvxl.calc");
 Clazz_load(["JU.P3", "java.util.Hashtable"], "J.jvxl.calc.MarchingSquares", ["JU.AU", "JU.Logger"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -9355,7 +9423,7 @@ this.contourIndex = contourIndex;
 /*eoif4*/})();
 };
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.shapesurface");
 Clazz_load(["J.shape.Mesh"], "J.shapesurface.IsosurfaceMesh", ["java.util.Hashtable", "JU.AU", "$.BS", "$.CU", "$.Lst", "$.M4", "$.P3", "$.P3i", "$.PT", "$.SB", "$.V3", "J.api.Interface", "J.jvxl.data.JvxlCoder", "$.JvxlData", "JS.T", "JU.BSUtil", "$.C", "$.ColorEncoder", "$.Logger", "$.SimpleUnitCell", "JV.Viewer"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -9673,6 +9741,7 @@ var colixes = data[0];
 var atomMap = null;
 var atrans = data[1];
 var ctrans = (atrans == null ? null :  Clazz_newShortArray (atrans.length, 0));
+var haveTransparentVertices = false;
 if (colixes != null) {
 for (var i = 0; i < colixes.length; i++) {
 var colix = colixes[i];
@@ -9680,12 +9749,14 @@ colixes[i] = colix;
 var f = (atrans == null ? 0 : atrans[i]);
 if (f > 0.01) {
 ctrans[i] = JU.C.getColixTranslucent3(colix, true, f);
+haveTransparentVertices = true;
 }}
 atomMap =  Clazz_newIntArray (bs.length(), 0);
 for (var pt = 0, i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i + 1), pt++) atomMap[i] = pt;
 
 }this.jvxlData.vertexColors =  Clazz_newIntArray (this.vc, 0);
 this.jvxlData.nVertexColors = this.vc;
+this.colorEncoder = null;
 var atoms = vwr.ms.at;
 var gdata = vwr.gdata;
 var isTranslucent = JU.C.isTransparent(this.colix);
@@ -9701,6 +9772,7 @@ if (isTranslucent) this.vcs[i] = JU.C.copyColixTranslucency(this.colix, colix);
  else this.vcs[i] = JU.C.copyColixTranslucency(trans, colix);
 }
 this.setPymolColors();
+return haveTransparentVertices;
 }, "JV.Viewer,~A,JU.BS");
 Clazz_defineMethod(c$, "setPymolColors", 
 function(){
@@ -9820,8 +9892,8 @@ var translucencyLevel = (this.jvxlData.translucency == 0 ? NaN : this.jvxlData.t
 if (this.jvxlData.meshColor != null) this.meshColix = JU.C.getColixS(this.jvxlData.meshColor);
 this.setJvxlDataRendering();
 this.isColorSolid = !this.jvxlData.isBicolorMap && this.jvxlData.vertexColors == null && this.jvxlData.vertexColorMap == null;
-if (this.colorEncoder == null && ("inherit".equals(this.jvxlData.colorScheme) || this.jvxlData.vertexColorMap == null)) return false;
 if (this.jvxlData.vertexColorMap == null) {
+if (this.colorEncoder == null && ("inherit".equals(this.jvxlData.colorScheme) || this.jvxlData.vertexColorMap == null)) return false;
 if (this.jvxlData.colorScheme != null) {
 var colorScheme = this.jvxlData.colorScheme;
 var isTranslucent = colorScheme.startsWith("translucent ");
@@ -9834,7 +9906,8 @@ this.remapColors(null, null, translucencyLevel);
 if (this.jvxlData.baseColor != null) {
 for (var i = this.vc; --i >= 0; ) this.vcs[i] = this.colix;
 
-}for (var entry, $entry = this.jvxlData.vertexColorMap.entrySet().iterator (); $entry.hasNext()&& ((entry = $entry.next ()) || true);) {
+}System.out.println("mapping color from PyMOL vertex colors");
+for (var entry, $entry = this.jvxlData.vertexColorMap.entrySet().iterator (); $entry.hasNext()&& ((entry = $entry.next ()) || true);) {
 var bsMap = entry.getValue();
 var key = entry.getKey();
 var pt = key.indexOf(" translucent");
@@ -10157,8 +10230,12 @@ this.jvxlData.colorDensity = false;
 this.isColorSolid = false;
 this.remapColors(this.vwr, null, translucentLevel);
 }, "~N,~N,~N");
+Clazz_defineMethod(c$, "getDataName", 
+function(){
+return "isosurface_" + this.thisID + ".jvxl";
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+});
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.jvxl.readers");
 Clazz_load(["J.jvxl.readers.SurfaceReader"], "J.jvxl.readers.VolumeDataReader", ["JU.AU", "$.SB", "J.jvxl.data.JvxlCoder", "JU.Logger"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -10339,7 +10416,7 @@ Clazz_overrideMethod(c$, "closeReader",
 function(){
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.jvxl.readers");
 Clazz_load(["J.jvxl.readers.VolumeDataReader", "JU.BS", "$.P3", "$.P3i", "J.atomdata.AtomData"], "J.jvxl.readers.AtomDataReader", ["java.util.Date", "JU.AU", "$.SB", "$.V3", "J.atomdata.RadiusData", "J.c.VDW", "J.jvxl.data.JvxlCoder", "JU.BSUtil", "$.Logger"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -10717,7 +10794,7 @@ if (this.isProgressive) this.thisPlane[ipt % this.yzCount] = value;
  else this.voxelData[i][j][k] = value;
 }, "~N,~N,~N,~N,~N");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.jvxl.readers");
 Clazz_load(["JU.P3", "J.jvxl.readers.AtomDataReader", "JU.P4", "$.V3"], "J.jvxl.readers.IsoSolventReader", ["java.util.Hashtable", "JU.BS", "$.Lst", "$.Measure", "J.jvxl.data.MeshData", "JU.BSUtil", "$.GData", "$.Logger", "$.MeshSurface"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -11350,7 +11427,7 @@ return this.ia + "_" + this.ib + "_" + this.ic + "_" + this.pS;
 };
 c$.testLinear = false;
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.jvxl.readers");
 Clazz_load(["J.jvxl.readers.SurfaceReader"], "J.jvxl.readers.SurfaceFileReader", ["JU.PT", "$.Rdr", "J.api.Interface"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -11490,7 +11567,7 @@ this.out.writeByteAsInt(0x0A);
 }}return this.line;
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.jvxl.readers");
 Clazz_load(["J.jvxl.readers.SurfaceFileReader"], "J.jvxl.readers.VolumeFileReader", ["JU.AU", "$.PT", "$.SB", "J.api.Interface", "J.atomdata.AtomData", "JU.Logger"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -11901,7 +11978,7 @@ this.voxelCounts[2] = n;
 this.params.insideOut = !this.params.insideOut;
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.jvxl.readers");
 Clazz_load(["J.jvxl.readers.VolumeFileReader"], "J.jvxl.readers.JvxlXmlReader", ["java.util.Hashtable", "JU.AU", "$.BS", "$.CU", "$.Lst", "$.P3", "$.P4", "$.PT", "$.SB", "J.jvxl.data.JvxlCoder", "$.MeshData", "J.jvxl.readers.XmlReader", "J.shapesurface.IsosurfaceMesh", "JU.C", "$.ColorEncoder", "$.Escape", "$.Logger"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -12615,7 +12692,7 @@ this.meshData =  new J.jvxl.data.MeshData();
 }this.updateTriangles();
 }});
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.rendersurface");
 Clazz_load(["J.render.MeshRenderer"], "J.rendersurface.IsosurfaceRenderer", ["JU.V3", "JU.C", "$.Normix"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -13000,7 +13077,7 @@ this.g3d.drawLineAB(this.pt1f, this.pt2f);
 }}
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026
 })(Clazz
 ,Clazz.getClassName
 ,Clazz.newLongArray

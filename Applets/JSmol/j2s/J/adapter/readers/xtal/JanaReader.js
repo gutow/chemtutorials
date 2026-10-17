@@ -86,7 +86,7 @@ return true;
 Clazz.overrideMethod(c$, "doPreSymmetry", 
 function(doApplySymmetry){
 if (this.ms != null) this.ms.setModulation(false, null);
-if (this.vibsFractional) this.asc.getXSymmetry().finalizeMoments(null, null, null);
+if (this.vibsFractional) this.asc.getXSymmetry().finalizeMoments(null, null);
 }, "~B");
 Clazz.overrideMethod(c$, "finalizeSubclassReader", 
 function(){
@@ -559,4 +559,4 @@ this.ms.addModulation(null, key, this.setRigidBodyPhase(key,  Clazz.newDoubleArr
 }, "~S,~N,~N");
 c$.XYZ =  Clazz.newArray(-1, ["x", "y", "z"]);
 });
-;//5.0.1-v7 Fri Jun 12 11:18:14 CDT 2026
+;//5.0.1-v7 Sat Sep 26 17:04:54 CDT 2026

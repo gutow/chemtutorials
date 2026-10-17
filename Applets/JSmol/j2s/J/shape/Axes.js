@@ -66,7 +66,7 @@ this.setPoints(this.vwr.g.axesMode);
 Clazz.defineMethod(c$, "setPoints", 
 function(axesMode){
 var unitcell;
-if (axesMode != 603979808 || this.ms.unitCells == null || (unitcell = this.vwr.getCurrentUnitCell()) == null) {
+if (axesMode != 603979808 || (unitcell = this.vwr.getCurrentUnitCell()) == null) {
 this.originPoint.setT(this.fixedOrigin != null ? this.fixedOrigin : axesMode == 603979809 ? this.vwr.getBoundBoxCenter() : this.pt0);
 this.setScale(this.vwr.getFloat(570425346) / 2);
 return;
@@ -146,4 +146,4 @@ sb.append("  axes type " + JU.PT.esc(this.axisType));
 }return sb.toString();
 }, "JU.SB");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

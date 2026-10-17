@@ -19,4 +19,4 @@ var bboxModels;
 this.isVisible = (this.vwr.getShowBbcage() && ((bboxModels = this.ms.bboxModels) == null || bs.intersects(bboxModels)));
 }, "JU.BS");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

@@ -1,5 +1,5 @@
 Clazz.declarePackage("JS");
-Clazz.load(["JU.SimpleUnitCell", "JU.P3", "JV.JC"], "JS.UnitCell", ["java.util.Hashtable", "JU.AU", "$.Lst", "$.M3", "$.M4", "$.P4", "$.PT", "$.Quat", "$.V3", "J.api.Interface", "JS.Symmetry", "JU.BoxInfo", "$.Escape", "$.Point3fi"], function(){
+Clazz.load(["JU.SimpleUnitCell", "JU.P3", "JV.JC"], "JS.UnitCell", ["java.util.Hashtable", "JU.AU", "$.Lst", "$.M3", "$.M4", "$.Measure", "$.P4", "$.PT", "$.Quat", "$.V3", "J.api.Interface", "JS.Symmetry", "$.SymmetryOperation", "JU.BoxInfo", "$.Escape", "$.Point3fi"], function(){
 var c$ = Clazz.decorateAsClass(function(){
 this.moreInfo = null;
 this.name = "";
@@ -1024,7 +1024,85 @@ this.toCartesian(v, true);
 return;
 }this.spinFrameToCartXYZ.rotate(v);
 }, "JU.T3");
+Clazz.defineMethod(c$, "getQuaternionRotationForHKL", 
+function(uvw, planeHKL){
+var c =  new JU.P3();
+this.toCartesian(c, false);
+var m =  new JU.V3();
+var a1 =  new JU.V3();
+JU.Measure.getPlaneProjection(c, planeHKL, a1, m);
+var type = 0;
+if (uvw == null) {
+uvw = JU.P3.new3(1, 1, 1);
+}if (uvw.x != 0) type |= 4;
+if (uvw.y != 0) type |= 2;
+if (uvw.z != 0) type |= 1;
+var ref =  new JU.V3();
+switch (type) {
+case 1:
+ref.x = -1;
+break;
+case 2:
+ref.z = -1;
+break;
+case 4:
+ref.y = -1;
+break;
+case 3:
+ref.x = 1;
+break;
+case 5:
+ref.y = 1;
+break;
+case 6:
+ref.z = 1;
+break;
+case 7:
+ref.x = 1;
+break;
+}
+a1 =  new JU.V3();
+var a2 =  new JU.V3();
+a1.cross(m, ref);
+a2.cross(a1, m);
+a1.cross(a2, m);
+a2.normalize();
+a1.normalize();
+var q = JU.Quat.getQuaternionFrame(null, a1, a2);
+return q;
+}, "JU.T3,JU.P4");
+Clazz.defineMethod(c$, "getTransform", 
+function(ops, fracA, fracB, temp){
+var p0 = temp[0];
+var p1 = temp[1];
+var vtrans = temp[2];
+var ptemp = temp[3];
+p1.setT(fracB);
+vtrans.setT(p1);
+this.unitize(p1);
+for (var i = 0, n = ops.length; i < n; i++) {
+var op = ops[i];
+p0.setT(fracA);
+op.rotTrans(p0);
+ptemp.setT(p0);
+this.unitize(p0);
+var d = p0.distanceSquared(p1);
+if (d < 1.96E-6) {
+vtrans.sub(ptemp);
+JS.SymmetryOperation.normalize12ths(vtrans);
+var m2 = JU.M4.newM4(op);
+m2.add(vtrans);
+p0.setT(fracA);
+m2.rotTrans(p0);
+this.unitize(p0);
+d = p0.distanceSquared(p1);
+if (d >= 1.96E-6) {
+continue;
+}return m2;
+}}
+return null;
+}, "~A,JU.P3,JU.P3,~A");
 c$.unitVectors =  Clazz.newArray(-1, [JV.JC.axisX, JV.JC.axisY, JV.JC.axisZ]);
 c$.v0 = null;
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

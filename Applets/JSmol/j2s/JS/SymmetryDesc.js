@@ -50,8 +50,8 @@ return a;
 return sb.toString();
 }, "J.api.SymmetryInterface,~N,~N,JU.P3,JU.P3,JU.P3,~S,~S,~N,~N,~N,JU.BS");
 Clazz.defineMethod(c$, "getDrawID", 
-function(id){
-return this.drawID + id + "\" ";
+function(name){
+return this.drawID + name + "\" ";
 }, "~S");
 Clazz.defineMethod(c$, "getSymopInfo", 
 function(iAtom, xyz, op, translation, pt, pt2, id, type, scaleFactor, nth, options, opList){
@@ -193,43 +193,6 @@ info.put("spaceGroupNote", "could not identify space group from name: " + sgName
 }}info.put("spaceGroupInfo", data);
 return info;
 }, "J.api.SymmetryInterface,~N,~S,~N,JU.P3,JU.P3,~S,~N,~N,~B,~B,~N,J.api.SymmetryInterface,JU.BS");
-Clazz.defineMethod(c$, "getTransform", 
-function(uc, ops, fracA, fracB, best){
-JS.SymmetryDesc.pta02.setT(fracB);
-JS.SymmetryDesc.vtrans.setT(JS.SymmetryDesc.pta02);
-uc.unitize(JS.SymmetryDesc.pta02);
-var dmin = 3.4028235E38;
-var imin = -1;
-for (var i = 0, n = ops.length; i < n; i++) {
-var op = ops[i];
-JS.SymmetryDesc.pta01.setT(fracA);
-op.rotTrans(JS.SymmetryDesc.pta01);
-JS.SymmetryDesc.ptemp.setT(JS.SymmetryDesc.pta01);
-uc.unitize(JS.SymmetryDesc.pta01);
-var d = JS.SymmetryDesc.pta01.distanceSquared(JS.SymmetryDesc.pta02);
-if (d < 1.96E-6) {
-JS.SymmetryDesc.vtrans.sub(JS.SymmetryDesc.ptemp);
-JS.SymmetryOperation.normalize12ths(JS.SymmetryDesc.vtrans);
-var m2 = JU.M4.newM4(op);
-m2.add(JS.SymmetryDesc.vtrans);
-JS.SymmetryDesc.pta01.setT(fracA);
-m2.rotTrans(JS.SymmetryDesc.pta01);
-uc.unitize(JS.SymmetryDesc.pta01);
-d = JS.SymmetryDesc.pta01.distanceSquared(JS.SymmetryDesc.pta02);
-if (d >= 1.96E-6) {
-continue;
-}return m2;
-}if (d < dmin) {
-dmin = d;
-imin = i;
-}}
-if (best) {
-var op = ops[imin];
-JS.SymmetryDesc.pta01.setT(fracA);
-op.rotTrans(JS.SymmetryDesc.pta01);
-uc.unitize(JS.SymmetryDesc.pta01);
-}return null;
-}, "JS.UnitCell,~A,JU.P3,JU.P3,~B");
 c$.getType = Clazz.defineMethod(c$, "getType", 
 function(id){
 var type;
@@ -454,6 +417,7 @@ return bsInfo;
 Clazz.defineMethod(c$, "createInfoArray", 
 function(op, uc, ptFrom, ptTarget, id, scaleFactor, options, haveTranslation, bsInfo, isSpaceGroup, isSpaceGroupAll, nDim){
 op.doFinalize();
+var isIdentity = (op.getOpType() == 0);
 var matrixOnly = ( new Boolean (bsInfo.get(10) & (bsInfo.cardinality() == (bsInfo.get(24) ? 2 : 1))).valueOf());
 var isTimeReversed = (op.timeReversal == -1);
 var isSpinSG = (op.spinU != null);
@@ -474,7 +438,9 @@ JS.SymmetryDesc.vtrans.setT(JS.SymmetryDesc.pta02);
 uc.unitize(JS.SymmetryDesc.pta02);
 if (JS.SymmetryDesc.pta01.distanceSquared(JS.SymmetryDesc.pta02) >= 1.96E-6) return null;
 JS.SymmetryDesc.vtrans.sub(JS.SymmetryDesc.ptemp);
-}var m2 = JU.M4.newM4(op);
+if (isIdentity) {
+isIdentity = false;
+}}var m2 = JU.M4.newM4(op);
 m2.add(JS.SymmetryDesc.vtrans);
 if (bsInfo.get(10) && ptTarget != null && pta00.equals(ptTarget)) {
 m2.m00 = Math.round(m2.m00);
@@ -751,11 +717,12 @@ var cmds = null;
 var createSpinDraw = (this.iModelSpin >= 0 && isSpinSG);
 while (true) {
 if (id == null || !bsInfo.get(3)) break;
-if (op.getOpType() == 0 || isSpaceGroupAll && op.isIrrelevant) {
+if (isIdentity || isSpaceGroupAll && op.isIrrelevant) {
 if (JU.Logger.debugging) System.out.println("!!SD irrelevent " + op.getOpTitle() + op.getOpPoint());
 cmds = "";
 break;
 }var opType = null;
+if (!id.endsWith("_")) id += "_";
 this.drawID = "\ndraw ID \"" + id;
 var drawSB =  new JU.SB();
 drawSB.append(this.getDrawID("*")).append(" delete");
@@ -1006,13 +973,18 @@ JS.SymmetryDesc.ptemp.scaleAdd2(0.9, JS.SymmetryDesc.ptemp, JS.SymmetryDesc.ptem
 if (drawFrameZ) this.drawLine(drawSB, "frame2Z", 0.2, JS.SymmetryDesc.ptemp2, JS.SymmetryDesc.ptemp, "purple");
 drawSB.append("\nsym_point = " + JU.Escape.eP(pta00));
 drawSB.append("\nvar p0 = " + JU.Escape.eP(JS.SymmetryDesc.ptemp2));
+var fromAtom = null;
 if (Clazz.instanceOf(pta00,"JM.Atom")) {
+fromAtom = pta00;
 drawSB.append("\nvar set2 = within(0.2,p0);if(!set2){set2 = within(0.2,p0.uxyz.xyz)}");
-drawSB.append("\n set2 &= {_" + (pta00).getElementSymbol() + "}");
+drawSB.append("\n set2 &= {_" + fromAtom.getElementSymbol() + "}");
 } else {
 drawSB.append("\nvar set2 = p0.uxyz");
 }drawSB.append("\nsym_target = set2;if (set2) {");
-if (!isSpecial && options != 1073742066 && ptTarget == null && !haveTranslation) {
+if (fromAtom != null && ptTarget == null) {
+var cmd = "\n modelkit set " + "atomset" + " " + "@{" + JU.PT.esc(id) + "+'|'+" + fromAtom.i + "+'|'+" + "set2" + "+'|'+" + "'draw ID " + id + " symop ({" + fromAtom.i + "})' + set2" + "}";
+drawSB.append(cmd);
+}if (!isSpecial && options != 1073742066 && ptTarget == null && !haveTranslation) {
 drawSB.append(this.getDrawID("offsetFrameX")).append(" diameter 0.20 @{set2.xyz} @{set2.xyz + ").append(JU.Escape.eP(vt1)).append("*0.9} color red");
 drawSB.append(this.getDrawID("offsetFrameY")).append(" diameter 0.20 @{set2.xyz} @{set2.xyz + ").append(JU.Escape.eP(vt2)).append("*0.9} color green");
 if (drawFrameZ) drawSB.append(this.getDrawID("offsetFrameZ")).append(" diameter 0.20 @{set2.xyz} @{set2.xyz + ").append(JU.Escape.eP(vt3)).append("*0.9} color purple");
@@ -1471,4 +1443,4 @@ c$.pta02 =  new JU.P3();
 c$.vtrans =  new JU.V3();
 c$.keys =  Clazz.newArray(-1, ["xyz", "xyzOriginal", "label", null, "fractionalTranslation", "cartesianTranslation", "inversionCenter", null, "axisVector", "rotationAngle", "matrix", "unitTranslation", "centeringVector", "timeReversal", "plane", "_type", "id", "cif2", "xyzCanonical", "xyzNormalized", "spin"]);
 });
-;//5.0.1-v7 Fri Jun 12 11:30:14 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

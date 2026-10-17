@@ -410,4 +410,4 @@ return JU.C.getColixShadedRGB(colix);
 c$.hoverable =  Clazz.newIntArray(-1, [31, 20, 25, 24, 22, 23, 36]);
 c$.clickableMax = JV.ShapeManager.hoverable.length - 1;
 });
-;//5.0.1-v7 Fri Jun 12 11:30:14 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

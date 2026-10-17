@@ -203,7 +203,9 @@ var drawAxes = false;
 var drawUC = false;
 var tok = 0;
 var lattice = null;
+var offset = null;
 var uc = null;
+var ucHKL = null;
 for (var i = eval.iToken; i < this.slen; ++i) {
 var propertyName = null;
 var propertyValue = null;
@@ -277,26 +279,14 @@ break;
 break;
 case 1814695966:
 if (isBest) this.invArg();
-drawUC = true;
-if (eval.isArrayParameter(i + 1)) {
-var oabc = eval.getPointArray(i + 1, -1, false, true);
-i = eval.iToken;
-if (!this.chk) uc = this.vwr.getSymTemp().getUnitCell(oabc, false, null);
-} else {
-switch (this.tokAt(i + 1)) {
-case 4:
-var tr = this.stringParameter(i + 1).toLowerCase();
-i = eval.iToken;
-if (tr.startsWith("unitcell_")) tr = this.vwr.getCurrentModelAuxInfo().get(tr);
-if (!this.chk && tr.length > 0 && (uc = this.vwr.getCurrentUnitCell()) != null) {
-uc = this.vwr.getSymTemp().getUnitCell(uc.getV0abc(tr, null), false, "draw");
-}break;
-case 8:
-case 1073742332:
-ucLattice = eval.getFractionalPoint(i + 1);
-i = eval.iToken;
-break;
-}
+drawUC = !isIntersect;
+var o = this.getUnitCellParameter(i, true);
+if (Clazz.instanceOf(o,"JU.T3")) {
+ucLattice = o;
+i = this.e.iToken;
+} else if (o != null) {
+uc = o;
+i = this.e.iToken;
 }if (this.tokAt(i + 1) == 1073741994) {
 if (tokIntersectBox == 1814695966) tokIntersectBox = 1073741994;
 ++i;
@@ -373,16 +363,19 @@ break;
 }if (this.tokAt(i + 1) == 1073742335) {
 iOn = ++i;
 }break;
-case 1073741998:
 case 134219777:
+if (this.tokAt(i + 1) == 1814695966) {
+ucHKL = this.getUnitCellParameter(++i, false);
+i = this.e.iToken;
+}case 1073741998:
 case 134217750:
 var isProjection = (iOn == i - 1);
 if (!havePoints && !isIntersect && tokIntersectBox == 0) {
-if (eval.theTok == 134219777) {
+if (tok == 134219777) {
 havePoints = true;
 this.setShapeProperty(22, "plane", null);
 var list =  new JU.Lst();
-plane = eval.hklParameter(++i, list, true);
+plane = eval.hklParameterUC(++i, list, true, ucHKL, null);
 i = eval.iToken;
 propertyName = "coords";
 propertyValue = list;
@@ -404,7 +397,7 @@ case 134217750:
 plane = eval.planeParameter(i, isBest);
 break;
 case 134219777:
-plane = eval.hklParameter(++i, null, true);
+plane = eval.hklParameterUC(++i, null, true, ucHKL, null);
 if (this.tokAt(eval.iToken + 1) == 1073742327) {
 isAll = true;
 eval.iToken++;
@@ -693,8 +686,10 @@ if (bsAtoms != null) {
 s = this.vwr.getModelkit(false).drawSymmetry(thisId, isSymop, iatom, xyz, iSym, trans, center, target, intScale, nth, options, opList, false);
 if (s == null) return;
 if ((isSymop || isSpinop) && Clazz.instanceOf(target,"JM.Atom") && Clazz.instanceOf(center,"JM.Atom")) {
-if (eval.fullCommand.indexOf("#quiet") >= 0) s = JU.PT.rep(s, "print", "#print");
-s += "\nmodelkit set atomset " + JU.PT.esc(thisId + "|" + (center).i + "|" + (target).i + "|" + eval.fullCommand) + ";";
+if (eval.fullCommand.indexOf("#quiet") >= 0) {
+s = JU.PT.rep(s, "print", "#print");
+}if (thisId == null) thisId = "sym_";
+s += JS.IsoExt.getAtomSetScript(thisId, (center).i, (target).i, eval.fullCommand);
 }}eval.runBufferedSafely(s.length > 0 ? s : "draw ID \"" + thisId + "*\" delete", eval.outputBuffer);
 return;
 case 4115:
@@ -725,7 +720,7 @@ break;
 case 12290:
 case 10:
 case 1073742325:
-propertyName = "atomSet";
+propertyName = "atomset";
 propertyValue = this.atomExpressionAt(i);
 if (isFrame) center = this.centerParameter(i);
 i = eval.iToken;
@@ -950,6 +945,35 @@ var pt = thisId.indexOf("_");
 if (pt >= 0) thisId = thisId.substring(0, pt);
 }this.vwr.getModelkit(false).drawAxes(pts, thisId, (drawAxes ? swidth : "delete"));
 }});
+c$.getAtomSetScript = Clazz.defineMethod(c$, "getAtomSetScript", 
+function(id, i1, i2, cmd){
+return "\nmodelkit set " + "atomset" + JU.PT.esc(id + "|" + i1 + "|" + i2 + "|" + cmd + ";");
+}, "~S,~N,~N,~S");
+Clazz.defineMethod(c$, "getUnitCellParameter", 
+function(i, allowLattice){
+if (this.e.isArrayParameter(i + 1)) {
+var oabc = this.e.getPointArray(i + 1, -1, false, true);
+i = this.e.iToken;
+if (!this.chk) return this.vwr.getSymTemp().getUnitCell(oabc, false, null);
+} else {
+switch (this.tokAt(i + 1)) {
+case 4:
+var tr = this.stringParameter(i + 1).toLowerCase();
+i = this.e.iToken;
+if (tr.startsWith("unitcell_")) tr = this.vwr.getCurrentModelAuxInfo().get(tr);
+var uc = null;
+if (!this.chk && tr.length > 0 && (uc = this.vwr.getCurrentUnitCell()) != null) {
+uc = this.vwr.getSymTemp().getUnitCell(uc.getV0abc(tr, null), false, "draw");
+}return uc;
+case 8:
+case 1073742332:
+var ucLattice = this.e.getFractionalPoint(i + 1);
+i = this.e.iToken;
+if (!allowLattice) this.invArg();
+return ucLattice;
+}
+}return null;
+}, "~N,~B");
 Clazz.defineMethod(c$, "mo", 
 function(isInitOnly, iShape){
 var eval = this.e;
@@ -1792,7 +1816,7 @@ break;
 case 134219777:
 planeSeen = true;
 propertyName = "plane";
-propertyValue = eval.hklParameter(++i, null, true);
+propertyValue = eval.hklParameter(++i, null, true, null);
 i = eval.iToken;
 sbCommand.append(" plane ").append(JU.Escape.eP4(propertyValue));
 break;
@@ -3475,4 +3499,4 @@ return null;
 }
 }, "~N,J.api.SymmetryInterface,JU.BS,~S,~N");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

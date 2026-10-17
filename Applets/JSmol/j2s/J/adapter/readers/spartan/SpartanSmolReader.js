@@ -110,7 +110,7 @@ function(){
 this.finalizeReaderASCR();
 if (this.asc.ac > 0 && this.spartanArchive != null && this.asc.bondCount == 0 && this.bondData != null) this.spartanArchive.addBonds(this.bondData, 0);
 if (this.moData != null) {
-var n = this.asc.atomSetInfo.get("HOMO_N");
+var n = this.asc.getInfo("HOMO_N");
 if (n != null) {
 var i = n.intValue();
 this.moData.put("HOMO", Integer.$valueOf(i));
@@ -179,4 +179,4 @@ function(value){
 this.asc.setAtomSetName(this.constraints + (this.constraints.length == 0 ? "" : " ") + "Energy=" + value + " KJ");
 }, "~N");
 });
-;//5.0.1-v7 Fri Jun 12 11:18:14 CDT 2026
+;//5.0.1-v7 Sat Sep 26 17:24:29 CDT 2026

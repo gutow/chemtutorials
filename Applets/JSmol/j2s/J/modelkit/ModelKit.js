@@ -115,7 +115,7 @@ var fa = JU.P3.newP(a);
 sym.toFractional(fa, false);
 var fb = JU.P3.newP(b);
 sym.toFractional(fb, false);
-return sym.getTransform(fa, fb, true);
+return sym.getTransform(fa, fb);
 }, "J.api.SymmetryInterface,JM.Atom,JM.Atom");
 c$.getKey = Clazz.defineMethod(c$, "getKey", 
 function(modelIndex, ext){
@@ -548,6 +548,8 @@ return null;
 }if (key === "atomset") {
 this.addAtomSet(value);
 return null;
+}if (key === "state") {
+return this.getAtomSetState();
 }if (key === "atomsMoved") {
 if (this.drawAtomSymmetry != null) {
 this.updateDrawAtomSymmetry(key, (value)[0]);
@@ -1172,7 +1174,7 @@ this.vwr.runScript(script);
 }, "~S");
 Clazz.defineMethod(c$, "assignAtomNoAddedSymmetry", 
 function(pt, atomIndex, bs, type, newPoint, cmd, site){
-this.assignAtoms(JU.Point3fi.newPF(pt, 0), atomIndex, bs, type, newPoint, cmd, false, site, null, null, null, null, 0, null);
+this.assignAtoms((pt == null ? null : JU.Point3fi.newPF(pt, 0)), atomIndex, bs, type, newPoint, cmd, false, site, null, null, null, null, 0, null);
 }, "JU.P3,~N,JU.BS,~S,~B,~S,~N");
 Clazz.defineMethod(c$, "assignAtoms", 
 function(thisPt, atomIndex, bsAtoms, type, newPoint, cmd, isClick, site, sym, points, flags, opsCtr, packing, uc){
@@ -1675,7 +1677,7 @@ for (var k = 0, i = bseq.nextSetBit(0); i >= 0; i = bseq.nextSetBit(i + 1)) {
 var p = JU.P3.newP(this.vwr.ms.at[i]);
 var p0 = JU.P3.newP(p);
 sg.toFractional(p, false);
-var m = sg.getTransform(fa, p, false);
+var m = sg.getTransform(fa, p);
 if (m == null) {
 return false;
 }var p2 = JU.P3.newP(fb);
@@ -1689,7 +1691,7 @@ sg.toFractional(fa, false);
 for (var k = points.length; --k >= 0; ) {
 fb.setT(points[k]);
 sg.toFractional(fb, false);
-var m = sg.getTransform(fa, fb, false);
+var m = sg.getTransform(fa, fb);
 if (m == null) {
 return false;
 }for (var i = points.length; --i > k; ) {
@@ -1964,7 +1966,7 @@ return bsMoved;
 }, "~N,JU.BS,JU.BS,JU.P3,~B,~B,JU.BS");
 Clazz.defineMethod(c$, "promptUser", 
 function(msg, def){
-return this.vwr.prompt(msg, def, null, false);
+return this.vwr.prompt(msg, def, false);
 }, "~S,~S");
 Clazz.defineMethod(c$, "resetBondFields", 
 function(){
@@ -2189,22 +2191,36 @@ return (exists && o[1] != null);
 Clazz.defineMethod(c$, "drawSymop", 
 function(a1, a2){
 var s = "({" + a1 + "}) ({" + a2 + "}) ";
-var cmd = "draw ID 'sym' symop " + s;
+var cmd = "draw ID " + "sym" + " symop " + s;
 this.vwr.evalStringGUI(cmd);
 }, "~N,~N");
+Clazz.defineMethod(c$, "getAtomSetState", 
+function(){
+if (this.drawAtomSymmetry == null || this.drawAtomSymmetry.isEmpty()) return null;
+var s = "";
+for (var i = 0; i < this.drawAtomSymmetry.size(); i++) {
+s += this.drawAtomSymmetry.get(i).getState();
+}
+return s;
+});
 Clazz.defineMethod(c$, "addAtomSet", 
 function(data){
 var tokens = JU.PT.split(data, "|");
 var id = tokens[0];
+if (id.equals("null")) {
+id = "sym_";
+}if (!id.endsWith("_")) id += "_";
 this.clearAtomSets(id);
+if (tokens.length == 1) return;
 var a1 = JU.PT.parseInt(tokens[1]);
+if (tokens[2].startsWith("({")) tokens[2] = tokens[2].substring(2);
 var a2 = JU.PT.parseInt(tokens[2]);
 var cmd = tokens[3];
 var bs = JU.BSUtil.newAndSetBit(a1);
 bs.set(a2);
 if (this.drawAtomSymmetry == null) {
 this.drawAtomSymmetry =  new JU.Lst();
-}this.drawAtomSymmetry.addLast(Clazz.innerTypeInstance(J.modelkit.ModelKit.DrawAtomSet, this, null, bs, id, cmd));
+}this.drawAtomSymmetry.addLast(Clazz.innerTypeInstance(J.modelkit.ModelKit.DrawAtomSet, this, null, bs, id, cmd, data));
 }, "~S");
 Clazz.defineMethod(c$, "clearAtomSets", 
 function(id){
@@ -2329,13 +2345,19 @@ Clazz.prepareCallback(this, arguments);
 this.bsAtoms = null;
 this.cmd = null;
 this.id = null;
+this.data = null;
 Clazz.instantialize(this, arguments);}, J.modelkit.ModelKit, "DrawAtomSet", null);
 Clazz.makeConstructor(c$, 
-function(bs, id, cmd){
+function(bs, id, cmd, data){
 this.bsAtoms = bs;
 this.cmd = cmd;
 this.id = id;
-}, "JU.BS,~S,~S");
+this.data = data;
+}, "JU.BS,~S,~S,~S");
+Clazz.defineMethod(c$, "getState", 
+function(){
+return "modelkit set " + "atomset" + " " + JU.PT.esc(this.data) + "\n";
+});
 /*eoif4*/})();
 };
 /*if3*/;(function(){
@@ -2745,4 +2767,4 @@ c$.GET = 0;
 c$.GET_CREATE = 1;
 c$.GET_DELETE = 2;
 });
-;//5.0.1-v7 Fri Jun 12 11:30:14 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

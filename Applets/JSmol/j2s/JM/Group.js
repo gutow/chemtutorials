@@ -350,8 +350,12 @@ var ia = this.getLeadOrFirstAtomIndex();
 this.unitID = this.chain.model.ms.at[ia].getUnitID(2);
 }return this.unitID;
 });
+Clazz.defineMethod(c$, "getGroupMenuKey", 
+function(){
+return "o>";
+});
 c$.standardGroupList = null;
 c$.group3Names =  new Array(128);
 c$.specialAtomNames = null;
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

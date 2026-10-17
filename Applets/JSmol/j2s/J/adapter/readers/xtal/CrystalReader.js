@@ -809,4 +809,4 @@ return false;
 c$.crtypes =  Clazz.newArray(-1, ["??", "nuclei", "bonds", "rings", "cages"]);
 c$.smap =  Clazz.newIntArray(-1, [2, 3, 4, 11, 5, 6, 7, 12, 8, 9, 10, 13]);
 });
-;//5.0.1-v7 Fri Jun 12 11:18:14 CDT 2026
+;//5.0.1-v7 Sat Sep 26 17:04:54 CDT 2026

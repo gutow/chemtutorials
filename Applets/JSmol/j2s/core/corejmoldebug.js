@@ -1,6 +1,6 @@
-Jmol.___JmolDate="$Date: 2026-06-12 11:39:46 -0500 (Fri, 12 Jun 2026) $"
+Jmol.___JmolDate="$Date: 2026-09-27 22:52:10 -0500 (Sun, 27 Sep 2026) $"
 Jmol.___fullJmolProperties="src/org/jmol/viewer/Jmol.properties"
-Jmol.___JmolVersion="16.4.7" // (legacy) also 16.4.8 (swingJS)
+Jmol.___JmolVersion="16.5.3" // (legacy) also 16.5.4 (swingJS)
 // JSmolJavaExt.js
  
 // contains class declarations for 
@@ -16,6 +16,7 @@ Jmol.___JmolVersion="16.4.7" // (legacy) also 16.4.8 (swingJS)
 // (local scope) Clazz_xxx, allowing them to be further compressed using
 // Google Closure Compiler in that same ANT task.
 
+// BH 2026.06.16 fixing sp.$replace; x.replace(y,"...$$...") use of $$ needs escaping
 // BH 2025.11.10 removing override of String.prototype.concat
 // BH 2023.07.08 NaN.0 fix
 // BH 10/16/2017 6:51:20 AM fixing range error for MSIE in prepareCallback setting arguments.length < 0
@@ -1034,7 +1035,14 @@ sp.$replace=function(c1,c2){
 	} else {    
 		c1=c1.replace(/([\\\$\.\*\+\|\?\^\{\}\(\)\[\]])/g,function($0,$1){return"\\"+$1;});
 	}
-	return this.replace(new RegExp(c1,"gm"),c2);
+	var pt = c2.indexOf("$");
+	var is$ = (pt >= 0 && pt < c2.length - 1);
+	if (is$)
+		c2 = c2.split("$").join("\uFFFD");
+	var ret = this.replace(new RegExp(c1,"gm"),c2);
+	if (is$)
+		ret = ret.split("\uFFFD").join("$");
+	return ret;	
 };
 sp.$generateExpFunction=function(str){
 var arr=[];

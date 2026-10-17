@@ -237,4 +237,4 @@ c.currentPalette = c.createColorScheme(colorScheme, false, true);
 return (c.currentPalette == 2147483647 ? null : c);
 }, "~S");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

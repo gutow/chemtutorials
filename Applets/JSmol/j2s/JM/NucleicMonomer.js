@@ -10,8 +10,9 @@ this.dssrBox = null;
 this.dssrBoxHeight = 0;
 this.dssrFrame = null;
 Clazz.instantialize(this, arguments);}, JM, "NucleicMonomer", JM.PhosphorusMonomer);
-Clazz.overrideConstructor(c$, 
+Clazz.makeConstructor(c$, 
 function(){
+Clazz.superConstructor (this, JM.NucleicMonomer, []);
 });
 c$.validateAndAllocate = Clazz.defineMethod(c$, "validateAndAllocate", 
 function(chain, group3, seqcode, firstAtomIndex, lastAtomIndex, specialAtomIndexes){
@@ -398,4 +399,4 @@ c$.ring5OffsetIndexes =  Clazz.newByteArray(-1, [3, 9, 10, 11, 7]);
 c$.riboseOffsetIndexes =  Clazz.newByteArray(-1, [25, 26, 22, 27, 28, 21, 29, 19, 0]);
 c$.heavyAtomIndexes =  Clazz.newByteArray(-1, [3, 1, 4, 5, 6, 7, 11, 10, 9, 16, 14, 8, 12, 17, 13]);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

@@ -181,4 +181,4 @@ throw e;
 }, "~N,~B");
 c$.tagNames =  Clazz.newArray(-1, ["audittrail", "experimentstepset", "sampleset", "xx result", "spectrum", "metadatalist", "conditionlist", "parameterlist", "sample", "spectrumdata", "peaklist", "author", "peaklist", "acquisitionnucleus", "effectiveexcitationfield", "spectrum1d", "spectrumAnnotationList", "chemicalcompound", "identifier", "npmrd_id", "structure", "atomlist", "atom", "bondlist", "bond", "atomassignmentlist", "multiplet", "atoms", "multiplicity", "peakList", "peak", "acquisition", "spectrumdataarray", "spectrumlist"]);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026

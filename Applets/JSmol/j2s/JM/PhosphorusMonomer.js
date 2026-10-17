@@ -8,8 +8,9 @@ Clazz.prepareFields (c$, function(){
 this.dssrSubType = J.c.STR.NONE;
 this.basepairSubType = J.c.STR.NONE;
 });
-Clazz.overrideConstructor(c$, 
+Clazz.makeConstructor(c$, 
 function(){
+Clazz.superConstructor (this, JM.PhosphorusMonomer, []);
 });
 Clazz.overrideMethod(c$, "isNucleic", 
 function(){
@@ -95,6 +96,10 @@ Clazz.overrideMethod(c$, "setDSSRStructureSubType",
 function(type){
 this.dssrSubType = type;
 }, "J.c.STR");
+Clazz.overrideMethod(c$, "getGroupMenuKey", 
+function(){
+return "n>";
+});
 c$.MAX_ADJACENT_PHOSPHORUS_DISTANCE = 8.0;
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

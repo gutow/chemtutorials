@@ -2,6 +2,7 @@ Clazz.declarePackage("JM");
 Clazz.load(["JM.BondCollection"], "JM.ModelSet", ["java.util.Hashtable", "JU.A4", "$.AU", "$.BS", "$.Lst", "$.M3", "$.M4", "$.Measure", "$.P3", "$.P4", "$.PT", "$.Quat", "$.SB", "$.V3", "J.api.Interface", "J.atomdata.RadiusData", "J.bspt.Bspf", "J.c.PAL", "$.VDW", "JM.Atom", "$.AtomIteratorWithinModel", "$.AtomIteratorWithinModelSet", "$.HBond", "$.Model", "$.StateScript", "JS.ScriptCompiler", "JU.BSUtil", "$.BoxInfo", "$.Edge", "$.Elements", "$.Escape", "$.JmolMolecule", "$.Logger", "JV.JC"], function(){
 var c$ = Clazz.decorateAsClass(function(){
 this.haveBioModels = false;
+this.haveMultipleChains = false;
 this.bsSymmetry = null;
 this.modelSetName = null;
 this.am = null;
@@ -600,6 +601,9 @@ this.modelNumbersForAtomLabel = mergeModelSet.modelNumbersForAtomLabel;
 this.modelNames = mergeModelSet.modelNames;
 this.modelNumbers = mergeModelSet.modelNumbers;
 this.frameTitles = mergeModelSet.frameTitles;
+this.haveBioModels = mergeModelSet.haveBioModels;
+this.someModelsHaveSymmetry = mergeModelSet.someModelsHaveSymmetry;
+this.haveMultipleChains = mergeModelSet.haveMultipleChains;
 this.haveChirality = mergeModelSet.haveChirality;
 this.boxInfo.setBoundBox(mergeModelSet.boxInfo.bbCorner0, mergeModelSet.boxInfo.bbCorner1, true, 1);
 if (this.msInfo != null) this.msInfo.remove("models");
@@ -619,7 +623,7 @@ if (this.unitCells != null && modelIndex < this.unitCells.length && this.unitCel
 if (uc == null && ucSimple == null) {
 var cellParams = this.getInfo(modelIndex, "unitCellParams");
 if (cellParams != null) {
-this.am[modelIndex].setSimpleCage(this.vwr.getSymTemp().setUnitCellFromParams(cellParams, false, NaN));
+this.setModelCage(modelIndex, this.vwr.getSymTemp().setUnitCellFromParams(cellParams, false, NaN), false);
 }} else if (uc != null) {
 if (returnCage) {
 var cai = this.vwr.getUnitCellAtomIndex();
@@ -636,7 +640,7 @@ function(iModel, originABC, name){
 if (iModel < 0 && (iModel = this.vwr.am.cmi) < 0) return null;
 var sym = this.vwr.getSymTemp();
 try {
-return this.setModelCage(iModel, originABC == null ? null : sym.getUnitCell(originABC, false, name));
+return this.setModelCage(iModel, originABC == null ? null : sym.getUnitCell(originABC, false, name), true);
 } catch (e) {
 if (Clazz.exceptionOf(e, Exception)){
 e.printStackTrace();
@@ -707,7 +711,7 @@ return -1;
 }, "~N");
 Clazz.defineMethod(c$, "setCrystallographicDefaults", 
 function(){
-return !this.haveBioModels && (this.someModelsHaveSymmetry && this.someModelsHaveFractionalCoordinates || this.getUnitCell(this.vwr.am.cmi) != null);
+return !this.haveBioModels && !this.haveMultipleChains && (this.someModelsHaveSymmetry && this.someModelsHaveFractionalCoordinates || this.getUnitCell(this.vwr.am.cmi) != null);
 });
 Clazz.defineMethod(c$, "getBoundBoxCenter", 
 function(modelIndex){
@@ -965,8 +969,11 @@ this.stateScripts.addLast(stateScript);
 Clazz.defineMethod(c$, "freezeModels", 
 function(){
 this.haveBioModels = false;
-for (var iModel = this.mc; --iModel >= 0; ) this.haveBioModels = new Boolean (this.haveBioModels | this.am[iModel].freeze()).valueOf();
-
+this.haveMultipleChains = false;
+for (var iModel = this.mc; --iModel >= 0; ) {
+this.haveBioModels = new Boolean (this.haveBioModels | this.am[iModel].freeze()).valueOf();
+if (this.am[iModel].chainCount > 1) this.haveMultipleChains = true;
+}
 });
 Clazz.defineMethod(c$, "getStructureList", 
 function(){
@@ -3053,7 +3060,7 @@ if (needBasis) {
 basis = JU.BSUtil.copy(bs);
 } else {
 this.setAsymmetricUnit(mi, bs, basis, !isP1);
-}if (nops > 1) this.setModelCage(mi, null);
+}if (nops > 1) this.setModelCage(mi, null, false);
 var nid = (this.atomSeqIDs == null ? 0 : this.atomSeqIDs.length);
 if (nid > 0) {
 for (var i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i + 1)) {
@@ -3108,7 +3115,7 @@ this.setInfo(mi, "spaceGroup", sg.getSpaceGroupName());
 if (this.am[mi].simpleCage != null) {
 sg.getUnitCell(this.am[mi].simpleCage.getUnitCellVectors(), false, null);
 this.setInfo(mi, "unitCellParams", sg.getUnitCellParams());
-}this.setModelCage(mi, null);
+}this.setModelCage(mi, null, false);
 }, "~N,J.api.SymmetryInterface,JU.BS");
 Clazz.defineMethod(c$, "setAsymmetricUnit", 
 function(mi, bsModelAtoms, basis, haveSymmetry){
@@ -3126,12 +3133,13 @@ if (isBasis) this.setSite(this.at[i], ++p, false);
 bsModelAtoms.andNot(basis);
 }}, "~N,JU.BS,JU.BS,~B");
 Clazz.defineMethod(c$, "setModelCage", 
-function(modelIndex, simpleCage){
+function(modelIndex, simpleCage, andSetInfo){
 if (modelIndex >= 0 && modelIndex < this.mc) {
-this.am[modelIndex].setSimpleCage(simpleCage);
+this.am[modelIndex].simpleCage = simpleCage;
+if (simpleCage != null && andSetInfo) this.setInfo(modelIndex, "unitCellParams", simpleCage.getUnitCellParams());
 this.haveUnitCells = true;
 }return simpleCage;
-}, "~N,J.api.SymmetryInterface");
+}, "~N,J.api.SymmetryInterface,~B");
 Clazz.defineMethod(c$, "fixP1AtomSites", 
 function(sym, bsAtoms){
 if (sym == null || sym.getSpaceGroupOperationCount() != 1) return;
@@ -3361,4 +3369,4 @@ return (this.isFloat() ? this.floatData : this.stringData);
 /*eoif3*/})();
 c$.hbondMinRasmol = 2.5;
 });
-;//5.0.1-v7 Fri Jun 12 11:30:14 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

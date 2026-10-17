@@ -167,6 +167,10 @@ this.writeByteAsInt((b >> 16));
 this.writeByteAsInt((b >> 8));
 this.writeByteAsInt(b);
 }}, "~N");
+Clazz.defineMethod(c$, "write", 
+function(b){
+this.write(b, 0, b.length);
+}, "~A");
 Clazz.defineMethod(c$, "cancel", 
 function(){
 this.isCanceled = true;
@@ -293,4 +297,4 @@ this.writeInt(x == 0 ? 0 : Float.floatToIntBits(x));
 }, "~N");
 c$.urlPrefixes =  Clazz.newArray(-1, ["http:", "https:", "sftp:", "ftp:", "file:", "cache:"]);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026

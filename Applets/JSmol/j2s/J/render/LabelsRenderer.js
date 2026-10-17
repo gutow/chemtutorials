@@ -143,4 +143,4 @@ function(text, pTemp, pointerColix, mode){
 return J.render.TextRenderer.render(this.vwr, text, this.g3d, this.scalePixelsPerMicron, this.imageFontScaling, this.boxXY, this.xy, pTemp, pointerColix, (this.doPointer == 0 ? 0 : this.vwr.getInt(553648147)), mode);
 }, "JM.Text,JU.P3i,~N,~N");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

@@ -593,4 +593,4 @@ if (a != null) lattvecs.addLast(a);
 return true;
 }, "JU.Lst,~S");
 });
-;//5.0.1-v7 Fri Jun 12 11:30:14 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

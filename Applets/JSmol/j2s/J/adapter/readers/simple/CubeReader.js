@@ -41,4 +41,4 @@ this.setAtomCoordScaled(null, tokens, 2, f).elementNumber = this.parseIntStr(tok
 }
 });
 });
-;//5.0.1-v7 Fri Jun 12 11:18:14 CDT 2026
+;//5.0.1-v7 Sat Sep 26 17:04:54 CDT 2026

@@ -83,4 +83,4 @@ var rd =  new J.atomdata.RadiusData(data, 0, J.atomdata.RadiusData.EnumType.ABSO
 this.setShapeSizeRD(0, rd, bsAtoms);
 }, "~A,JU.BS");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026

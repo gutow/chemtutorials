@@ -605,7 +605,6 @@ this.addTokenToPostfix(4, "$" + this.theValue);
 done = true;
 break;
 case 1814695966:
-var n = this.ltokenPostfix.size();
 this.getToken();
 this.addTokenToPostfix(4, JS.T.nameOf(tok));
 if (this.tokPeek() == 268435969) {
@@ -1138,4 +1137,4 @@ this.errorMessageUntranslated = strUntranslated;
 return false;
 }, "~S,~S");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Mon Sep 28 08:46:51 CDT 2026

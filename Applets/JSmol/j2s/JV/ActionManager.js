@@ -914,7 +914,7 @@ Clazz.defineMethod(c$, "pickLabel",
 function(iatom){
 var label = this.vwr.ms.at[iatom].atomPropertyString(this.vwr, 1825200146);
 if (this.pressedCount == 2) {
-label = this.vwr.apiPlatform.prompt("Set label for atomIndex=" + iatom, label, null, false);
+label = this.vwr.prompt("Set label for atomIndex=" + iatom, label, false);
 if (label != null) {
 this.vwr.shm.setAtomLabel(label, iatom);
 this.vwr.refresh(1, "label atom");
@@ -1465,4 +1465,4 @@ if (this.nodes.length == 0) return "" + this;
 return JV.binding.Binding.getMouseActionName(this.action, false) + " nPoints = " + this.ptNext + " " + this.nodes[0];
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

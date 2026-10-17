@@ -38,7 +38,7 @@ function(){
 this.defaultFontId = this.zeroFontId = this.vwr.gdata.getFont3DFSS("SansSerif", "Plain", 13).fid;
 this.defaultColix = 0;
 this.defaultBgcolix = 0;
-this.defaultOffset = JV.JC.LABEL_DEFAULT_OFFSET;
+this.defaultOffset = 8396800;
 this.defaultAlignment = 4;
 this.defaultPointer = 0;
 this.defaultZPos = 0;
@@ -329,7 +329,7 @@ this.putLabel(i, null);
 text.setText(label);
 text.textUnformatted = strLabel;
 }}if (!doAll) return;
-if (this.defaultOffset != JV.JC.LABEL_DEFAULT_OFFSET) this.setOffsets(i, this.defaultOffset);
+if (this.defaultOffset != 8396800) this.setOffsets(i, this.defaultOffset);
 if (this.defaultAlignment != 4) this.setHorizAlignment(i, this.defaultAlignment);
 if ((this.defaultZPos & 32) != 0) this.setZPos(i, 32, true);
  else if ((this.defaultZPos & 16) != 0) this.setZPos(i, 16, true);
@@ -392,7 +392,7 @@ if (text != null) text.bgcolix = bgcolix;
 Clazz.defineMethod(c$, "setOffsets", 
 function(i, offset){
 if (this.offsets == null || i >= this.offsets.length) {
-if (offset == JV.JC.LABEL_DEFAULT_OFFSET) return;
+if (offset == 8396800) return;
 this.offsets = JU.AU.ensureLengthI(this.offsets, this.ms.ac);
 }this.offsets[i] = (this.offsets[i] & 63) | offset;
 var text = this.getLabel(i);
@@ -469,7 +469,7 @@ this.lastPicked = this.pickedAtom;
 this.vwr.acm.setDragAtomIndex(iAtom);
 this.pickedX = x;
 this.pickedY = y;
-this.pickedOffset = (this.offsets == null || this.pickedAtom >= this.offsets.length ? JV.JC.LABEL_DEFAULT_OFFSET : this.offsets[this.pickedAtom]);
+this.pickedOffset = (this.offsets == null || this.pickedAtom >= this.offsets.length ? 8396800 : this.offsets[this.pickedAtom]);
 return true;
 }return false;
 }if (prevX == 2147483647) this.pickedAtom = -1;
@@ -521,4 +521,4 @@ if (JU.C.isColixTranslucent(colix)) colix = JU.C.getColixTranslucent3(colix, fal
 }, "~N,JM.Atom,~B");
 c$.nullToken =  Clazz.newArray(-1, [null]);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

@@ -328,4 +328,4 @@ this.gdata.plotText(x, y, z, this.gdata.getColorArgbOrGray(colix), 0, text, font
 this.outputComment("end text " + this.nText + ": " + text);
 }, "~N,~N,~N,~N,~S,JU.Font");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026

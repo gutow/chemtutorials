@@ -10,6 +10,7 @@ this.v0 = null;
 this.tracePt = 0;
 this.trace = null;
 this.symmform = null;
+this.spin = 0;
 this.isFrom000 = false;
 this.matTemp = null;
 this.matInv = null;
@@ -191,4 +192,4 @@ var d = this.lengthSquared();
 if (d != 0) this.scale(this.magMoment / Math.sqrt(d));
 });
 });
-;//5.0.1-v7 Fri Jun 12 11:30:25 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026

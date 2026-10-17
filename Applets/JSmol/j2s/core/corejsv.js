@@ -61,9 +61,9 @@
 ){
 var $t$;
 //var c$;
-Jmol.___JmolDate="$Date: 2026-06-12 11:39:46 -0500 (Fri, 12 Jun 2026) $"
+Jmol.___JmolDate="$Date: 2026-09-27 22:52:10 -0500 (Sun, 27 Sep 2026) $"
 Jmol.___fullJmolProperties="src/org/jmol/viewer/Jmol.properties"
-Jmol.___JmolVersion="16.4.7" // (legacy) also 16.4.8 (swingJS)
+Jmol.___JmolVersion="16.5.3" // (legacy) also 16.5.4 (swingJS)
 // JSmolJavaExt.js
  
 // contains class declarations for 
@@ -79,6 +79,7 @@ Jmol.___JmolVersion="16.4.7" // (legacy) also 16.4.8 (swingJS)
 // (local scope) Clazz_xxx, allowing them to be further compressed using
 // Google Closure Compiler in that same ANT task.
 
+// BH 2026.06.16 fixing sp.$replace; x.replace(y,"...$$...") use of $$ needs escaping
 // BH 2025.11.10 removing override of String.prototype.concat
 // BH 2023.07.08 NaN.0 fix
 // BH 10/16/2017 6:51:20 AM fixing range error for MSIE in prepareCallback setting arguments.length < 0
@@ -1097,7 +1098,14 @@ sp.$replace=function(c1,c2){
 	} else {    
 		c1=c1.replace(/([\\\$\.\*\+\|\?\^\{\}\(\)\[\]])/g,function($0,$1){return"\\"+$1;});
 	}
-	return this.replace(new RegExp(c1,"gm"),c2);
+	var pt = c2.indexOf("$");
+	var is$ = (pt >= 0 && pt < c2.length - 1);
+	if (is$)
+		c2 = c2.split("$").join("\uFFFD");
+	var ret = this.replace(new RegExp(c1,"gm"),c2);
+	if (is$)
+		ret = ret.split("\uFFFD").join("$");
+	return ret;	
 };
 sp.$generateExpFunction=function(str){
 var arr=[];
@@ -2807,7 +2815,7 @@ Clazz_overrideMethod(c$, "finalize",
 function(){
 });
 })();
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_load(null, "java.lang.Thread", ["java.util.Date"], function(){
 var c$ = Clazz_decorateAsClass(function(){
 this.target = null;
@@ -2912,7 +2920,7 @@ return "Thread[" + this.getName() + "," + this.getPriority() + "," + "" + "]";
 }});
 c$.J2S_THREAD = null;
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 (function(){
 var c$ = Clazz_decorateAsClass(function(){
 this.parent = null;
@@ -2949,7 +2957,7 @@ function(){
 return this.maxPriority;
 });
 })();
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_load(["java.io.FilterInputStream"], "java.io.BufferedInputStream", null, function(){
 var c$ = Clazz_decorateAsClass(function(){
 this.buf = null;
@@ -3093,7 +3101,7 @@ if (input != null) input.close();
 return;
 });
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_load(["java.io.Reader"], "java.io.BufferedReader", null, function(){
 var c$ = Clazz_decorateAsClass(function(){
 this.$in = null;
@@ -3297,7 +3305,7 @@ this.$in = null;
 this.cb = null;
 }});
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_load(["java.io.Writer"], "java.io.BufferedWriter", null, function(){
 var c$ = Clazz_decorateAsClass(function(){
 this.out = null;
@@ -3422,7 +3430,7 @@ return;
 this.pos += available;
 }}}}, "~S,~N,~N");
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_load(["java.io.InputStream"], "java.io.ByteArrayInputStream", null, function(){
 var c$ = Clazz_decorateAsClass(function(){
 this.buf = null;
@@ -3493,7 +3501,7 @@ Clazz_overrideMethod(c$, "close",
 function(){
 });
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_load(["java.io.OutputStream"], "java.io.ByteArrayOutputStream", null, function(){
 var c$ = Clazz_decorateAsClass(function(){
 this.buf = null;
@@ -3568,7 +3576,7 @@ Clazz_overrideMethod(c$, "close",
 function(){
 });
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_load(["java.io.InputStream"], "java.io.FilterInputStream", null, function(){
 var c$ = Clazz_decorateAsClass(function(){
 this.$in = null;
@@ -3611,7 +3619,7 @@ function(){
 return this.$in.markSupported();
 });
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_load(["java.io.Closeable"], "java.io.InputStream", null, function(){
 var c$ = Clazz_declareType(java.io, "InputStream", null, java.io.Closeable);
 Clazz_defineMethod(c$, "read", 
@@ -3681,7 +3689,7 @@ function(){
 });
 c$.skipBuffer = null;
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_load(["java.io.Reader"], "java.io.InputStreamReader", null, function(){
 var c$ = Clazz_decorateAsClass(function(){
 this.$in = null;
@@ -3760,7 +3768,7 @@ this.$in.close();
 this.isOpen = false;
 });
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_load(["java.io.Closeable", "$.Flushable"], "java.io.OutputStream", null, function(){
 var c$ = Clazz_declareType(java.io, "OutputStream", null, [java.io.Closeable, java.io.Flushable]);
 Clazz_defineMethod(c$, "write", 
@@ -3782,7 +3790,7 @@ Clazz_overrideMethod(c$, "close",
 function(){
 });
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Dec 19 08:21:45 CST 2025
 Clazz_load(["java.io.Closeable"], "java.io.Reader", null, function(){
 var c$ = Clazz_decorateAsClass(function(){
 this.lock = null;
@@ -3825,7 +3833,7 @@ function(){
 throw  new java.io.IOException("reset() not supported");
 });
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_load(["java.io.Reader"], "java.io.StringReader", null, function(){
 var c$ = Clazz_decorateAsClass(function(){
 this.str = null;
@@ -3896,7 +3904,7 @@ function(){
 this.str = null;
 });
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_load(["java.io.Closeable", "$.Flushable", "java.lang.Appendable"], "java.io.Writer", null, function(){
 var c$ = Clazz_decorateAsClass(function(){
 this.lock = null;
@@ -3962,7 +3970,7 @@ this.write(csq.subSequence(start, end).toString());
 }return this;
 }, "CharSequence,~N,~N");
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_declarePackage("java.net");
 Clazz_load(["java.io.IOException"], "java.net.MalformedURLException", null, function(){
 var c$ = Clazz_declareType(java.net, "MalformedURLException", java.io.IOException);
@@ -3971,7 +3979,7 @@ function(){
 Clazz_superConstructor (this, java.net.MalformedURLException, []);
 });
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_declarePackage("java.net");
 Clazz_load(["java.io.IOException"], "java.net.UnknownServiceException", null, function(){
 var c$ = Clazz_declareType(java.net, "UnknownServiceException", java.io.IOException);
@@ -3980,7 +3988,7 @@ function(){
 Clazz_superConstructor (this, java.net.UnknownServiceException, []);
 });
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_declarePackage("java.net");
 Clazz_load(["java.util.Hashtable"], "java.net.URL", null, function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -4230,7 +4238,7 @@ c$.factory = null;
 c$.handlers =  new java.util.Hashtable();
 c$.streamHandlerLock =  new Clazz._O();
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_declarePackage("java.net");
 Clazz_load(null, "java.net.URLConnection", ["java.util.ArrayList"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -4286,7 +4294,7 @@ return;
 this.requests.add( Clazz_newArray(-1, [key, value]));
 }, "~S,~S");
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_declarePackage("java.net");
 (function(){
 var c$ = Clazz_declareType(java.net, "URLEncoder", null);
@@ -4295,7 +4303,7 @@ function(s){
 return encodeURIComponent(s);
 }, "~S");
 })();
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_declarePackage("java.net");
 (function(){
 var c$ = Clazz_declareType(java.net, "URLStreamHandler", null);
@@ -4465,10 +4473,10 @@ path = file.substring(0, q);
 }this.setURL(u, protocol, host, port, authority, userInfo, path, query, ref);
 }, "java.net.URL,~S,~S,~N,~S,~S");
 })();
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_declarePackage("java.net");
 Clazz_declareInterface(java.net, "URLStreamHandlerFactory");
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_declarePackage("java.text");
 (function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -4495,7 +4503,7 @@ function(obj){
 return java.text.MessageFormat.format(this.pattern,  Clazz_newArray(-1, [obj]));
 }, "~O");
 })();
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 (function(){
 var c$ = Clazz_decorateAsClass(function(){
 this.haveNextNextGaussian = false;
@@ -4733,7 +4741,7 @@ Math, // math: package containing random, pow, and seedrandom
 52    // significance: there are 52 significant digits in a double
 );
 }}})();
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_load(["java.util.Collection"], "java.util.AbstractCollection", ["java.lang.reflect.Array"], function(){
 var c$ = Clazz_declareType(java.util, "AbstractCollection", null, java.util.Collection);
 /*LV!1824 unnec constructor*/Clazz_overrideMethod(c$, "add", 
@@ -4869,7 +4877,7 @@ buffer += (']');
 return buffer;
 });
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_load(["java.util.AbstractCollection", "$.Iterator", "$.List", "$.ListIterator", "$.RandomAccess"], "java.util.AbstractList", null, function(){
 var c$ = Clazz_decorateAsClass(function(){
 this.modCount = 0;
@@ -5295,7 +5303,7 @@ this.iterator.set(object);
 /*eoif3*/})();
 /*eoif3*/})();
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_load(["java.util.Map"], "java.util.AbstractMap", ["java.util.AbstractCollection", "$.AbstractSet", "$.Iterator"], function(){
 var c$ = Clazz_decorateAsClass(function(){
 this.$keySet = null;
@@ -5550,7 +5558,7 @@ this.setIterator.remove();
 /*eoif5*/})();
 };
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_load(["java.util.AbstractCollection", "$.Set"], "java.util.AbstractSet", null, function(){
 var c$ = Clazz_declareType(java.util, "AbstractSet", java.util.AbstractCollection, java.util.Set);
 Clazz_overrideMethod(c$, "equals", 
@@ -5590,7 +5598,7 @@ result = this.remove(it.next()) || result;
 }return result;
 }, "java.util.Collection");
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_load(["java.util.AbstractList", "$.List", "$.RandomAccess"], "java.util.ArrayList", ["java.util.Arrays"], function(){
 var c$ = Clazz_decorateAsClass(function(){
 this.firstIndex = 0;
@@ -5976,7 +5984,7 @@ this.firstIndex = 0;
 this.lastIndex = this.array.length;
 });
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_load(["java.util.AbstractList", "$.RandomAccess"], "java.util.Arrays", null, function(){
 var c$ = Clazz_declareType(java.util, "Arrays", null);
 c$.fill = Clazz_defineMethod(c$, "fill", 
@@ -6142,7 +6150,7 @@ c$.comp = {compare: function (o1, o2) {
 return (o1 == null ? (o2 == null ? 0 : -1) : o2 == null ? 1
 : typeof o1 == "number" ? o1 - o2 : o1.compareTo(o2))}};
 }});
-;//5.0.1-v7 Mon May 12 23:47:55 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_load(["java.util.AbstractList", "$.AbstractMap", "$.AbstractSet", "$.Collection", "$.Enumeration", "$.Iterator", "$.List", "$.ListIterator", "$.Map", "$.RandomAccess", "$.Set", "$.SortedMap", "$.SortedSet", "java.lang.reflect.Array"], "java.util.Collections", ["java.util.ArrayList", "$.Arrays", "java.util.Map.Entry", "java.util.Random"], function(){
 var c$ = Clazz_declareType(java.util, "Collections", null);
 c$.emptyEnumeration = Clazz_defineMethod(c$, "emptyEnumeration", 
@@ -8313,11 +8321,11 @@ c$.EMPTY_LIST =  new java.util.Collections.EmptyList();
 c$.EMPTY_SET =  new java.util.Collections.EmptySet();
 c$.EMPTY_MAP =  new java.util.Collections.EmptyMap();
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 (function(){
 var c$ = Clazz_declareType(java.util, "Dictionary", null);
 })();
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_load(["java.util.AbstractCollection", "$.AbstractSet", "$.Dictionary", "$.Enumeration", "$.Iterator", "$.Map"], "java.util.Hashtable", ["java.util.Collections"], function(){
 var c$ = Clazz_decorateAsClass(function(){
 this.table = null;
@@ -9075,7 +9083,7 @@ return v;
 /*eoif3*/})();
 c$.USE_SIMPLE = true;
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_load(["java.util.Map"], "java.util.MapEntry", null, function(){
 var c$ = Clazz_decorateAsClass(function(){
 this.key = null;
@@ -9135,7 +9143,7 @@ return this.key + "=" + this.value;
 });
 Clazz_declareInterface(java.util.MapEntry, "Type");
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_load(["java.util.Hashtable"], "java.util.Properties", null, function(){
 var c$ = Clazz_decorateAsClass(function(){
 this.builder = null;
@@ -9311,11 +9319,11 @@ return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;"
 }, "~S");
 c$.lineSeparator = null;
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_declareInterface(java.util, "SortedMap", java.util.Map);
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_declareInterface(java.util, "SortedSet", java.util.Set);
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_load(["java.util.Enumeration"], "java.util.StringTokenizer", null, function(){
 var c$ = Clazz_decorateAsClass(function(){
 this.string = null;
@@ -9391,48 +9399,48 @@ return this.string.substring(i);
 }}throw  new java.util.NoSuchElementException();
 });
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_declarePackage("javajs.api");
 Clazz_declareInterface(javajs.api, "BytePoster");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("javajs.api");
 Clazz_declareInterface(javajs.api, "GenericColor");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.api");
 Clazz_declareInterface(J.api, "GenericFileInterface");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("javajs.api");
 Clazz_declareInterface(javajs.api, "GenericOutputChannel");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("javajs.api");
 Clazz_declareInterface(javajs.api, "JSInterface");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("javajs.api");
 Clazz_declareInterface(javajs.api, "JSONEncodable");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("javajs.api");
 Clazz_declareInterface(javajs.api, "ZInputStream");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("javajs.api.js");
 Clazz_declareInterface(javajs.api.js, "J2SObjectInterface");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.api");
 Clazz_declareInterface(J.api, "GenericMouseInterface");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.api");
 Clazz_load(["J.api.FontManager"], "J.api.GenericPlatform", null, function(){
 var c$ = Clazz_declareInterface(J.api, "GenericPlatform", J.api.FontManager);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.api");
 Clazz_declareInterface(J.api, "PlatformViewer");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.api");
 Clazz_declareInterface(J.api, "EventManager");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.api");
 Clazz_declareInterface(J.api, "FontManager");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
 Clazz_load(null, "JU.Font", ["JU.AU"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -9537,7 +9545,7 @@ c$.font3ds =  new Array(8);
 c$.fontFaces =  Clazz_newArray(-1, ["SansSerif", "Serif", "Monospaced", ""]);
 c$.fontStyles =  Clazz_newArray(-1, ["Plain", "Bold", "Italic", "BoldItalic"]);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JS");
 Clazz_load(["javajs.api.GenericColor"], "JS.Color", null, function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -9583,7 +9591,7 @@ var s = ("00000000" + Integer.toHexString(this.argb));
 return "[0x" + s.substring(s.length - 8, s.length) + "]";
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JS");
 (function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -9601,15 +9609,15 @@ this.height = h;
 return this;
 }, "~N,~N");
 })();
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.awtjs");
 (function(){
 var c$ = Clazz_declareType(J.awtjs, "Event", null);
 })();
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.api");
 Clazz_declareInterface(J.api, "GenericMenuInterface");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
 Clazz_load(["JU.P3"], "JU.A4", ["JU.T3"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -9696,7 +9704,7 @@ function(){
 return "[" + this.x + "," + this.y + "," + this.z + "," + (this.angle * 180.0 / 3.141592653589793) + "]";
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
 Clazz_load(["java.net.URLConnection"], "JU.AjaxURLConnection", ["JU.AU", "$.Rdr"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -9735,7 +9743,7 @@ function(){
 return this.doAjax();
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
 Clazz_load(["java.net.URLStreamHandler"], "JU.AjaxURLStreamHandler", ["JU.AjaxURLConnection", "$.SB"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -9769,7 +9777,7 @@ result.append(u.getRef());
 }return result.toString();
 }, "java.net.URL");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
 Clazz_load(["java.net.URLStreamHandlerFactory", "java.util.Hashtable"], "JU.AjaxURLStreamHandlerFactory", ["JU.AjaxURLStreamHandler"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -9785,7 +9793,7 @@ if (fac == null) this.htFactories.put(protocol, fac =  new JU.AjaxURLStreamHandl
 return (fac.protocol == null ? null : fac);
 }, "~S");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
 Clazz_load(null, "JU.AU", ["java.lang.reflect.Array", "java.util.Arrays", "JU.Lst"], function(){
 var c$ = Clazz_declareType(JU, "AU", null);
@@ -10149,7 +10157,7 @@ for (var i = b.length; --i >= 0;) { var j = b[i] & 0xFF; if
 }}return b;
 }, "~A");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
 Clazz_load(null, "JU.Base64", ["JU.SB"], function(){
 var c$ = Clazz_declareType(JU, "Base64", null);
@@ -10203,7 +10211,7 @@ return bytes;
 c$.base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 c$.decode64 =  Clazz_newIntArray(-1, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 62, 0, 62, 0, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 0, 0, 0, 0, 63, 0, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 0, 0, 0, 0, 0]);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
 Clazz_load(["javajs.api.JSONEncodable"], "JU.BS", ["JU.PT", "$.SB"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -10562,7 +10570,7 @@ return (iPrev >= 0 ? null : bs);
 }, "~S");
 c$.emptyBitmap =  Clazz_newIntArray (0, 0);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
 Clazz_load(["java.util.Hashtable"], "JU.CU", ["JU.P3", "$.PT"], function(){
 var c$ = Clazz_declareType(JU, "CU", null);
@@ -10698,7 +10706,7 @@ c$.mapJavaScriptColors =  new java.util.Hashtable();
 for (var i = JU.CU.colorNames.length; --i >= 0; ) JU.CU.mapJavaScriptColors.put(JU.CU.colorNames[i], Integer.$valueOf(JU.CU.colorArgbs[i]));
 
 }});
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
 Clazz_load(null, "JU.DF", ["JU.PT", "$.SB"], function(){
 var c$ = Clazz_declareType(JU, "DF", null);
@@ -10794,7 +10802,7 @@ c$.formattingStrings =  Clazz_newArray(-1, ["0", "0.0", "0.00", "0.000", "0.0000
 c$.formatAdds =  Clazz_newDoubleArray(-1, [0.5, 0.05, 0.005, 0.0005, 0.00005, 0.000005, 0.0000005, 0.00000005, 0.000000005, 0.0000000005, 0.00000000005, 0.000000000005, 0.0000000000005]);
 c$.useNumberLocalization =  Clazz_newArray(-1, [Boolean.TRUE]);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
 Clazz_load(["java.lang.Enum"], "JU.Encoding", null, function(){
 var c$ = Clazz_declareType(JU, "Encoding", Enum);
@@ -10805,7 +10813,7 @@ Clazz_defineEnumConstant(c$, "UTF_16LE", 3, []);
 Clazz_defineEnumConstant(c$, "UTF_32BE", 4, []);
 Clazz_defineEnumConstant(c$, "UTF_32LE", 5, []);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
 Clazz_load(["java.util.ArrayList"], "JU.Lst", null, function(){
 var c$ = Clazz_declareType(JU, "Lst", java.util.ArrayList);
@@ -10830,9 +10838,9 @@ function(v){
 return this._removeObject(v);
 }}, "~O");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
-(function(){
+Clazz_load(null, "JU.M34", ["JU.PT", "$.SB"], function(){
 var c$ = Clazz_decorateAsClass(function(){
 this.m00 = 0;
 this.m01 = 0;
@@ -10843,6 +10851,7 @@ this.m12 = 0;
 this.m20 = 0;
 this.m21 = 0;
 this.m22 = 0;
+this.size = 0;
 Clazz_instantialize(this, arguments);}, JU, "M34", null);
 Clazz_defineMethod(c$, "setAA33", 
 function(a){
@@ -11165,8 +11174,21 @@ Clazz_defineMethod(c$, "err",
 function(){
 throw  new ArrayIndexOutOfBoundsException("matrix column/row out of bounds");
 });
-})();
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+Clazz_defineMethod(c$, "toJSON", 
+function(){
+var sb =  new JU.SB();
+var x =  Clazz_newFloatArray (this.size, 0);
+sb.appendC('[');
+for (var i = 0; i < this.size; i++) {
+if (i > 0) sb.appendC(',');
+this.getRow(i, x);
+sb.append(JU.PT.toJSON(null, x));
+}
+sb.appendC(']');
+return sb.toString();
+});
+});
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
 Clazz_load(["JU.M34"], "JU.M3", ["JU.T3"], function(){
 var c$ = Clazz_declareType(JU, "M3", JU.M34, java.io.Serializable);
@@ -11465,7 +11487,7 @@ function(){
 return (Math.abs(this.determinant3() - 1) < 0.001);
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
 Clazz_load(["JU.M34"], "JU.M4", ["JU.T3"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -11957,7 +11979,7 @@ function(n, f){
 return (Math.abs(n) < f ? 0 : n);
 }, "~N,~N");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
 Clazz_load(["java.io.OutputStream", "javajs.api.GenericOutputChannel"], "JU.OC", ["java.io.BufferedWriter", "$.ByteArrayOutputStream", "$.OutputStreamWriter", "JU.Base64", "$.SB"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -12127,6 +12149,10 @@ this.writeByteAsInt((b >> 16));
 this.writeByteAsInt((b >> 8));
 this.writeByteAsInt(b);
 }}, "~N");
+Clazz_defineMethod(c$, "write", 
+function(b){
+this.write(b, 0, b.length);
+}, "~A");
 Clazz_defineMethod(c$, "cancel", 
 function(){
 this.isCanceled = true;
@@ -12253,7 +12279,7 @@ this.writeInt(x == 0 ? 0 : Float.floatToIntBits(x));
 }, "~N");
 c$.urlPrefixes =  Clazz_newArray(-1, ["http:", "https:", "sftp:", "ftp:", "file:", "cache:"]);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
 Clazz_load(["JU.T3"], "JU.P3", null, function(){
 var c$ = Clazz_declareType(JU, "P3", JU.T3);
@@ -12283,7 +12309,7 @@ return JU.P3.new3(a[0], a[1], a[2]);
 }, "~A");
 c$.unlikely = null;
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
 Clazz_load(["JU.T3i"], "JU.P3i", null, function(){
 var c$ = Clazz_declareType(JU, "P3i", JU.T3i);
@@ -12296,7 +12322,7 @@ pt.z = z;
 return pt;
 }, "~N,~N,~N");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
 Clazz_load(["JU.T4"], "JU.P4", null, function(){
 var c$ = Clazz_declareType(JU, "P4", JU.T4);
@@ -12321,7 +12347,7 @@ var dw = this.w - p1.w;
 return Math.sqrt(dx * dx + dy * dy + dz * dz + dw * dw);
 }, "JU.P4");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
 Clazz_load(null, "JU.PT", ["java.util.Arrays", "JU.AU", "$.DF", "$.SB"], function(){
 var c$ = Clazz_declareType(JU, "PT", null);
@@ -13300,7 +13326,7 @@ return (pt < 0 ? JU.PT.parseFloat(s) : JU.PT.parseFloat(s.substring(0, pt)) / JU
 c$.tensScale =  Clazz_newFloatArray(-1, [10, 100, 1000, 10000, 100000, 1000000]);
 c$.decimalScale =  Clazz_newFloatArray(-1, [0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001, 0.00000001, 0.000000001, 0.0000000001, 0.00000000001, 0.000000000001, 0.0000000000001, 0.00000000000001, 0.000000000000001]);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
 (function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -13452,7 +13478,7 @@ function(offset, str){
 this.replace(offset, offset, str);
 }, "~N,~S");
 })();
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
 Clazz_load(["javajs.api.JSONEncodable"], "JU.T3", null, function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -13603,7 +13629,7 @@ t.set(this.x, this.y, this.z);
 return t;
 }, "JU.T3");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
 (function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -13654,7 +13680,7 @@ function(){
 return this.asString();
 });
 })();
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
 Clazz_load(["JU.T3"], "JU.T4", null, function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -13684,14 +13710,14 @@ return (this.x == t.x && this.y == t.y && this.z == t.z && this.w == t.w);
 }, "~O");
 Clazz_overrideMethod(c$, "toString", 
 function(){
-return "(" + this.x + ", " + this.y + ", " + this.z + ", " + this.w + ")";
+return "{" + this.x + ", " + this.y + ", " + this.z + ", " + this.w + "}";
 });
 Clazz_overrideMethod(c$, "toJSON", 
 function(){
 return "[" + this.x + ", " + this.y + ", " + this.z + ", " + this.w + "]";
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JU");
 Clazz_load(["JU.T3"], "JU.V3", null, function(){
 var c$ = Clazz_declareType(JU, "V3", JU.T3);
@@ -13720,7 +13746,7 @@ var cross = Math.sqrt(xx * xx + yy * yy + zz * zz);
 return Math.abs(Math.atan2(cross, this.dot(v1)));
 }, "JU.V3");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_load(["java.util.AbstractMap", "$.AbstractSet", "$.Iterator", "$.Map", "$.MapEntry"], "java.util.HashMap", ["java.util.AbstractCollection", "$.Arrays", "java.util.MapEntry.Type"], function(){
 var c$ = Clazz_decorateAsClass(function(){
 this.elementCount = 0;
@@ -14390,7 +14416,7 @@ value = entry.value[1];
 /*eoif3*/})();
 c$.USE_SIMPLE = true;
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_load(["java.util.HashMap"], "java.util.LinkedHashMap", ["java.util.AbstractCollection", "$.AbstractSet", "java.util.MapEntry.Type"], function(){
 var c$ = Clazz_decorateAsClass(function(){
 this.accessOrder = false;
@@ -14728,16 +14754,16 @@ entry.next = lnext.clone();
 });
 /*eoif3*/})();
 });
-;//5.0.1-v7 Mon May 12 23:42:45 CDT 2025
+;//5.0.1-v7 Fri Nov 21 04:39:22 CST 2025
 Clazz_declarePackage("J.api");
 Clazz_declareInterface(J.api, "JmolJDXMOLParser");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.api");
 Clazz_declareInterface(J.api, "JmolJDXMOLReader");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.api");
 Clazz_declareInterface(J.api, "GenericGraphics");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.jsv");
 Clazz_load(["J.api.JmolJDXMOLParser", "java.util.Hashtable"], "J.jsv.JDXMOLParser", ["JU.BS", "$.Lst", "$.PT", "$.SB", "JU.Logger"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -15069,7 +15095,7 @@ function(){
 return this.firstModelWithPeaks;
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("J.jsv");
 Clazz_load(["J.api.JmolJSpecView"], "J.jsv.JSV", ["java.util.Hashtable", "JU.BS", "$.Lst", "$.PT", "JU.Escape", "$.Logger", "JV.FileManager"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -15208,49 +15234,49 @@ return null;
 }
 }, "~S,~N");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026
 Clazz_declarePackage("JSV.api");
 Clazz_declareInterface(JSV.api, "AnnotationData");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.api");
 Clazz_declareInterface(JSV.api, "AppletFrame");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.api");
 Clazz_declareInterface(JSV.api, "JSVAppInterface", JSV.api.JSVAppletInterface);
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.api");
 Clazz_declareInterface(JSV.api, "JSVAppletInterface");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.api");
 Clazz_declareInterface(JSV.api, "JSVFileHelper");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.api");
 Clazz_declareInterface(JSV.api, "JSVMainPanel", JSV.api.JSVViewPanel);
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.api");
 Clazz_declareInterface(JSV.api, "JSVPanel", JSV.api.JSVViewPanel);
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.api");
 Clazz_declareInterface(JSV.api, "JSVTree");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.api");
 Clazz_declareInterface(JSV.api, "JSVTreeNode");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.api");
 Clazz_declareInterface(JSV.api, "JSVTreePath");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.api");
 Clazz_declareInterface(JSV.api, "JSVViewPanel");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.api");
 Clazz_declareInterface(JSV.api, "JSVZipReader");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.api");
 Clazz_declareInterface(JSV.api, "PanelListener");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.api");
 Clazz_declareInterface(JSV.api, "ScriptInterface");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.app");
 Clazz_load(["JSV.api.JSVAppInterface", "$.PanelListener", "$.ScriptInterface"], "JSV.app.JSVApp", ["JU.Lst", "$.PT", "JSV.common.Coordinate", "$.JSVFileManager", "$.JSVersion", "$.JSViewer", "$.ScriptToken", "JU.Logger"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -15620,7 +15646,7 @@ function(){
 return "JSpecView Applet " + JSV.common.JSVersion.VERSION + "\n\n" + "Authors:\nProf. Robert M. Hanson,\nD. Facey, K. Bryan, C. Walters, Prof. Robert J. Lancashire and\nvolunteer developers through sourceforge.";
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.app");
 Clazz_load(["J.api.GenericMouseInterface"], "JSV.app.GenericMouse", ["JU.Logger"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -15800,7 +15826,7 @@ this.jsvp = null;
 this.disposed = true;
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.appletjs");
 Clazz_load(["javajs.api.JSInterface", "JSV.api.AppletFrame", "$.JSVAppletInterface"], "JSV.appletjs.JSVApplet", ["java.net.URL", "java.util.Hashtable", "JU.PT", "JSV.app.JSVApp", "JSV.js2d.JsMainPanel", "$.JsPanel", "JU.Logger"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -16092,7 +16118,7 @@ Clazz_overrideMethod(c$, "processKeyEvent",
 function(event){
 }, "~O");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(["java.lang.Enum", "JSV.common.Coordinate"], "JSV.common.Annotation", ["JU.CU"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -16209,7 +16235,7 @@ Clazz_defineEnumConstant(c$, "Views", 4, []);
 Clazz_defineEnumConstant(c$, "NONE", 5, []);
 /*eoif2*/})();
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(["JSV.common.Annotation"], "JSV.common.ColoredAnnotation", null, function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -16230,7 +16256,7 @@ this.color = color;
 return this;
 }, "~N,~N,JSV.common.Spectrum,~S,javajs.api.GenericColor,~B,~B,~N,~N");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(["JSV.common.Parameters"], "JSV.common.ColorParameters", ["java.util.Hashtable", "$.StringTokenizer", "JU.CU", "$.Lst", "JSV.common.ScriptToken"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -16375,7 +16401,7 @@ c$.WHITE = null;
 c$.defaultPlotColors =  new Array(8);
 c$.defaultPlotColorNames =  Clazz_newArray(-1, ["black", "darkGreen", "darkred", "orange", "magenta", "cyan", "maroon", "darkGray"]);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 (function(){
 var c$ = Clazz_declareType(JSV.common, "CoordComparator", null, java.util.Comparator);
@@ -16384,7 +16410,7 @@ function(c1, c2){
 return (c1.getXVal() > c2.getXVal() ? 1 : c1.getXVal() < c2.getXVal() ? -1 : 0);
 }, "JSV.common.Coordinate,JSV.common.Coordinate");
 })();
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(["JSV.common.CoordComparator"], "JSV.common.Coordinate", ["java.util.Arrays", "$.StringTokenizer", "JU.Lst"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -16641,7 +16667,7 @@ return JSV.common.Coordinate.findXForPeakNearest(xyCoords, xyCoords[pt].getXVal(
 }, "~A,~N,~N,~B,~B");
 c$.c =  new JSV.common.CoordComparator();
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(["java.lang.Enum"], "JSV.common.ExportType", null, function(){
 var c$ = Clazz_declareType(JSV.common, "ExportType", Enum);
@@ -16674,7 +16700,7 @@ Clazz_defineEnumConstant(c$, "CML", 12, []);
 Clazz_defineEnumConstant(c$, "AML", 13, []);
 Clazz_defineEnumConstant(c$, "PDF", 14, []);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(["JSV.common.XYScaleConverter", "java.util.Hashtable", "JU.BS", "$.Lst", "JSV.common.Coordinate"], "JSV.common.GraphSet", ["JU.DF", "$.PT", "JSV.common.Annotation", "$.ColorParameters", "$.ColoredAnnotation", "$.ImageView", "$.IntegralData", "$.Measurement", "$.MeasurementData", "$.PanelData", "$.Parameters", "$.PeakData", "$.PeakPickEvent", "$.PlotWidget", "$.ScaleData", "$.ScriptToken", "$.Spectrum", "$.ViewData", "JU.Logger"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -19706,7 +19732,7 @@ return Clazz_doubleToInt(this.x1 * 1000 + this.x2 * 1000000);
 c$.RT2 = Math.sqrt(2.0);
 c$.veryLightGrey = null;
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(["JSV.common.XYScaleConverter"], "JSV.common.ImageView", ["JSV.common.Coordinate", "$.ScaleData"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -19958,7 +19984,7 @@ function(){
 return this.xPixel0;
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(["JSV.common.Measurement"], "JSV.common.Integral", null, function(){
 var c$ = Clazz_declareType(JSV.common, "Integral", JSV.common.Measurement);
@@ -19970,7 +19996,7 @@ this.setValue(value);
 return this;
 }, "~N,~N,JSV.common.Spectrum,~N,~N,~N");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 (function(){
 var c$ = Clazz_declareType(JSV.common, "IntegralComparator", null, java.util.Comparator);
@@ -19979,7 +20005,7 @@ function(m1, m2){
 return (m1.getXVal() < m2.getXVal() ? -1 : m1.getXVal() > m2.getXVal() ? 1 : 0);
 }, "JSV.common.Measurement,JSV.common.Measurement");
 })();
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(["java.lang.Enum", "JSV.common.MeasurementData", "$.IntegralComparator"], "JSV.common.IntegralData", ["java.util.Collections", "$.StringTokenizer", "JU.AU", "$.BS", "$.DF", "$.Lst", "$.PT", "JSV.common.Annotation", "$.Coordinate", "$.Integral", "$.ScriptToken"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -20320,7 +20346,7 @@ Clazz_defineEnumConstant(c$, "NA", 9, []);
 c$.c =  new JSV.common.IntegralComparator();
 c$.$HEADER =  Clazz_newArray(-1, ["peak", "start/ppm", "end/ppm", "value"]);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(["java.lang.Enum", "JSV.source.JDXDataObject", "JU.Lst"], "JSV.common.Spectrum", ["java.util.Hashtable", "JU.PT", "JSV.common.Coordinate", "$.Parameters", "$.PeakInfo", "JSV.source.JDXSourceStreamTokenizer", "JU.Logger"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -20802,7 +20828,7 @@ Clazz_defineEnumConstant(c$, "TO_ABS", 2, []);
 Clazz_defineEnumConstant(c$, "TOGGLE", 3, []);
 /*eoif2*/})();
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 (function(){
 var c$ = Clazz_declareType(JSV.common, "JSVersion", null);
@@ -20852,7 +20878,7 @@ throw e;
 JSV.common.JSVersion.majorVersion = mv;
 JSV.common.JSVersion.versionInt = v;
 }})();
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(["java.util.Hashtable"], "JSV.common.JSVFileManager", ["java.io.BufferedInputStream", "$.BufferedReader", "$.File", "$.InputStreamReader", "$.StringReader", "java.net.URL", "JU.AU", "$.BS", "$.Encoding", "$.JSJSONParser", "$.P3", "$.PT", "$.SB", "JSV.common.JSVersion", "$.JSViewer", "JSV.exception.JSVException", "JU.Logger"], function(){
 var c$ = Clazz_declareType(JSV.common, "JSVFileManager", null);
@@ -21456,7 +21482,7 @@ c$.nmrdbServerH1 = "https://nmr-prediction.service.zakodium.com/v1/predict/proto
 c$.nmrdbServerC13 = "https://nmr-prediction.service.zakodium.com/v1/predict/carbon?POST?{\"molfile\":\"$MOLFILE\",\"includeJDX\":true}";
 c$.stringCount = 0;
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(["javajs.api.BytePoster", "J.api.PlatformViewer", "JSV.common.Spectrum"], "JSV.common.JSViewer", ["java.io.File", "java.net.URL", "java.util.Arrays", "$.Hashtable", "JU.CU", "$.Lst", "$.OC", "$.PT", "$.SB", "JSV.common.Annotation", "$.ExportType", "$.JSVFileManager", "$.PanelData", "$.PanelNode", "$.Parameters", "$.PeakInfo", "$.PrintLayout", "$.RepaintManager", "$.ScriptToken", "$.ScriptTokenizer", "$.SyncManager", "JSV.source.JDXReader", "$.JDXSource", "JSV.tree.SimpleTree", "JU.Logger"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -23093,7 +23119,7 @@ c$.isJS = false;
 c$.isSwingJS = false;
 c$.jsmolObject = null;
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(["JSV.common.Annotation", "$.Coordinate"], "JSV.common.Measurement", null, function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -23168,7 +23194,7 @@ function(){
 return "[" + this.getXVal() + "," + this.pt2.getXVal() + "]";
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(["JU.Lst", "JSV.api.AnnotationData"], "JSV.common.MeasurementData", ["JU.AU", "$.DF", "JSV.common.Annotation", "$.Parameters"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -23310,7 +23336,7 @@ return false;
 });
 c$.HEADER =  Clazz_newArray(-1, ["", "start", "end", "value"]);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(["java.lang.Enum", "J.api.EventManager", "java.util.Hashtable", "JU.Lst"], "JSV.common.PanelData", ["JU.CU", "JSV.common.Annotation", "$.Coordinate", "$.GraphSet", "$.JSVFileManager", "$.JSVersion", "$.JSViewer", "$.MeasurementData", "$.Parameters", "$.PeakPickEvent", "$.ScriptToken", "$.Spectrum", "$.SubSpecChangeEvent", "$.ZoomEvent", "JU.Font", "$.Logger"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -24550,7 +24576,7 @@ Clazz_defineEnumConstant(c$, "UP", 0, []);
 Clazz_defineEnumConstant(c$, "DOWN", 1, []);
 /*eoif2*/})();
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(null, "JSV.common.PanelNode", ["JU.SB", "JSV.common.Parameters"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -24673,7 +24699,7 @@ JSV.common.Parameters.putInfo(key, info, "panelSource", this.source.getFilePath(
 return info;
 }, "~S");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(null, "JSV.common.Parameters", ["java.util.Hashtable", "JSV.common.ScriptToken"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -24781,7 +24807,7 @@ function(match, info, key, value){
 if (value != null && JSV.common.Parameters.isMatch(match, key)) info.put(match == null ? key : match, value);
 }, "~S,java.util.Map,~S,~O");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(["JSV.common.MeasurementData"], "JSV.common.PeakData", ["JU.DF", "JSV.common.Coordinate", "$.PeakPick"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -24866,7 +24892,7 @@ if (++n == 100) break;
 }, "JSV.common.Parameters,~N,JSV.common.ScaleData");
 c$.HNMR_HEADER =  Clazz_newArray(-1, ["peak", "shift/ppm", "intens", "shift/hz", "diff/hz", "2-diff", "3-diff"]);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(null, "JSV.common.PeakInfo", ["JU.PT"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -25026,7 +25052,7 @@ function(){
 return Clazz_doubleToInt((this.px0 + this.px1) / 2);
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(["JSV.common.Measurement"], "JSV.common.PeakPick", null, function(){
 var c$ = Clazz_declareType(JSV.common, "PeakPick", JSV.common.Measurement);
@@ -25042,7 +25068,7 @@ this.setPt2(this.getXVal(), this.getYVal());
 }return this;
 }, "~N,~N,JSV.common.Spectrum,~S,~N");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(["java.util.EventObject"], "JSV.common.PeakPickEvent", null, function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -25068,7 +25094,7 @@ function(){
 return (this.peakInfo == null ? null : this.peakInfo.toString());
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(["JSV.common.Coordinate", "$.ScriptToken"], "JSV.common.PlotWidget", null, function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -25126,7 +25152,7 @@ function(enabled){
 this.isEnabled = enabled;
 }, "~B");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 (function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -25161,7 +25187,7 @@ this.asPDF = true;
 pd.setDefaultPrintOptions(this);
 }}, "JSV.common.PanelData");
 })();
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(null, "JSV.common.RepaintManager", ["JSV.common.JSViewer"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -25192,7 +25218,7 @@ this.repaintPending = false;
 this.notify();
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(null, "JSV.common.ScaleData", ["JSV.common.Coordinate"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -25504,7 +25530,7 @@ this.spectrumScaleFactor *= f;
 c$.NTICKS =  Clazz_newIntArray(-1, [2, 5, 10, 10]);
 c$.LOGTICKS =  Clazz_newDoubleArray(-1, [Math.log10(2), Math.log10(5), 0, 1]);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(["java.lang.Enum"], "JSV.common.ScriptToken", ["java.util.Hashtable", "JU.Lst", "$.PT", "$.SB", "JSV.common.ScriptTokenizer"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -25714,7 +25740,7 @@ Clazz_defineEnumConstant(c$, "ZOOM", 94, ["OUT or PREVIOUS or NEXT or x1,x2 or x
 Clazz_defineEnumConstant(c$, "ZOOMBOXCOLOR", 95, []);
 Clazz_defineEnumConstant(c$, "ZOOMBOXCOLOR2", 96, []);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(null, "JSV.common.ScriptTokenizer", ["JU.PT"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -25785,7 +25811,7 @@ function(){
 return this.str.substring(this.pt);
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 (function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -25810,7 +25836,7 @@ function(){
 return this.title;
 });
 })();
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(null, "JSV.common.SyncManager", ["JU.PT", "$.SB", "JSV.common.PanelNode", "JU.Logger"], function(){
 var c$ = Clazz_declareType(JSV.common, "SyncManager", null);
@@ -25919,7 +25945,7 @@ return "Select: " + pi + " script=\"" + script + " \" sourceID=\"" + pd.getSpect
 }, "JSV.common.PanelData,JSV.common.PeakInfo");
 c$.testScript = "<PeakData  index=\"1\" title=\"\" model=\"~1.1\" type=\"1HNMR\" xMin=\"3.2915\" xMax=\"3.2965\" atoms=\"15,16,17,18,19,20\" multiplicity=\"\" integral=\"1\"> src=\"JPECVIEW\" file=\"http://SIMULATION/$caffeine\"";
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_load(null, "JSV.common.ViewData", ["JSV.common.Coordinate", "$.ScaleData"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -26062,15 +26088,15 @@ sd[i].maxYOnScale = this.scaleData[i].minYOnScale * (1 - f2) + f2 * this.scaleDa
 return sd;
 }, "~N,~B,~N,~N");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 Clazz_declareInterface(JSV.common, "XYScaleConverter");
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.common");
 (function(){
 var c$ = Clazz_declareType(JSV.common, "ZoomEvent", null);
 /*LV!1824 unnec constructor*/})();
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.dialog");
 Clazz_load(["JSV.api.AnnotationData", "JSV.common.Annotation"], "JSV.dialog.JSVDialog", ["JU.DF", "$.PT", "JSV.common.IntegralData", "$.PeakData", "JSV.dialog.DialogManager"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -26703,12 +26729,12 @@ var pt = url.indexOf(key);
 return (pt < 0 ? null : url.substring(pt + key.length, url.indexOf("&", pt + 1)));
 }, "~S,~S");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.exception");
 Clazz_load(["java.lang.Exception"], "JSV.exception.JSVException", null, function(){
 var c$ = Clazz_declareType(JSV.exception, "JSVException", Exception);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.js2d");
 (function(){
 var c$ = Clazz_declareType(JSV.js2d, "Display", null);
@@ -26749,7 +26775,7 @@ c$.convertPointFromScreen = Clazz_defineMethod(c$, "convertPointFromScreen",
 function(canvas, ptTemp){
 }, "~O,JU.P3");
 })();
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.js2d");
 (function(){
 var c$ = Clazz_declareType(JSV.js2d, "Image", null);
@@ -26823,7 +26849,7 @@ this.fromIntARGB(canvas.buf32, canvas.buf8);
 context.putImageData(canvas.imgdata,x,y);
 }}, "~O,~O,~N,~N,~N,~N");
 })();
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.js2d");
 Clazz_load(["J.api.GenericFileInterface"], "JSV.js2d.JsFile", ["JU.PT", "JSV.common.JSVFileManager"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -26883,7 +26909,7 @@ throw e;
 }
 }, "java.net.URL,~A,~S");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.js2d");
 Clazz_load(["JSV.api.JSVFileHelper"], "JSV.js2d.JsFileHelper", ["JU.PT", "JSV.common.JSViewer", "JSV.js2d.JsFile"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -26934,7 +26960,7 @@ function(info, msg){
 return prompt(info, msg);
 }}, "~S,~S");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.js2d");
 (function(){
 var c$ = Clazz_declareType(JSV.js2d, "JsFont", null);
@@ -26973,7 +26999,7 @@ font.fontMetrics.font = font.font;
 return Math.ceil(font.fontMetrics.measureText(text).width);
 }}, "JU.Font,~S");
 })();
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.js2d");
 Clazz_load(["J.api.GenericGraphics"], "JSV.js2d.JsG2D", ["JU.CU", "JSV.common.JSViewer", "JS.Color"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -27153,7 +27179,7 @@ function(g, x2, y2){
 g.lineTo(x2, y2);
 }}, "~O,~N,~N");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.js2d");
 Clazz_load(["JSV.api.JSVPanel"], "JSV.js2d.JsPanel", ["JSV.common.JSViewer", "$.PanelData", "JU.Font", "$.Logger"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -27350,7 +27376,7 @@ function(x, y){
 this.vwr.showMenu(x, y);
 }, "~N,~N");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.js2d");
 Clazz_load(["JSV.common.ColorParameters"], "JSV.js2d.JsParameters", ["JS.Color"], function(){
 var c$ = Clazz_declareType(JSV.js2d, "JsParameters", JSV.common.ColorParameters);
@@ -27375,7 +27401,7 @@ function(newName){
 return ( new JSV.js2d.JsParameters().setName(newName)).setElementColors(this);
 }, "~S");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.js2d");
 Clazz_load(["J.api.GenericPlatform"], "JSV.js2d.JsPlatform", ["java.net.URL", "JU.AjaxURLStreamHandlerFactory", "$.Rdr", "JSV.app.GenericMouse", "JSV.js2d.Display", "$.Image", "$.JsFile", "$.JsFont"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -27615,7 +27641,7 @@ if (msgNo != null) ok = false;
 return (ok ? 1 : 2);
 }, "~S,~S");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.js2d");
 Clazz_load(["JSV.api.JSVMainPanel"], "JSV.js2d.JsMainPanel", null, function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -27678,7 +27704,7 @@ if (i >= 0) this.currentPanelIndex = i;
 this.visible = true;
 }, "JSV.common.JSViewer,JSV.api.JSVPanel,JU.Lst");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.source");
 Clazz_load(["JSV.source.JDXHeader", "java.util.Hashtable"], "JSV.source.JDXDataObject", ["JU.DF", "$.PT", "JSV.common.Annotation", "$.Coordinate", "JSV.exception.JSVException", "JU.Logger"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -28233,7 +28259,7 @@ c$.gyroMap =  new java.util.Hashtable();
 for (var i = 0, n = JSV.source.JDXDataObject.gyroData.length - 1; i < n; i += 2) JSV.source.JDXDataObject.gyroMap.put("" + Clazz_doubleToInt(JSV.source.JDXDataObject.gyroData[i]), Double.$valueOf(JSV.source.JDXDataObject.gyroData[i + 1]));
 
 }});
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.source");
 Clazz_load(["java.util.Iterator"], "JSV.source.JDXDecompressor", ["JSV.common.Coordinate", "JU.Logger"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -28561,7 +28587,7 @@ break;
 }
 }
 }});
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.source");
 Clazz_load(["JU.Lst"], "JSV.source.JDXHeader", ["java.util.Hashtable", "JSV.source.JDXSourceStreamTokenizer"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -28716,7 +28742,7 @@ entry[1] = value;
 /*eoif3*/})();
 c$.typeNames =  Clazz_newArray(-1, ["ND NMR SPECTRUM   NMR", "NMR SPECTRUM      NMR", "INFRARED SPECTRUM IR", "MASS SPECTRUM     MS", "RAMAN SPECTRUM    RAMAN", "GAS CHROMATOGRAM  GC", "UV/VIS SPECTRUM   UV/VIS"]);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.source");
 Clazz_load(["J.api.JmolJDXMOLReader"], "JSV.source.JDXReader", ["java.io.BufferedReader", "$.FileInputStream", "$.StringReader", "java.util.Hashtable", "$.LinkedHashMap", "$.StringTokenizer", "javajs.api.Interface", "JU.AU", "$.Lst", "$.PT", "$.Rdr", "$.SB", "JSV.common.Coordinate", "$.JSVFileManager", "$.JSViewer", "$.PeakInfo", "$.Spectrum", "JSV.exception.JSVException", "JSV.source.JDXDecompressor", "$.JDXHeader", "$.JDXSource", "$.JDXSourceStreamTokenizer", "JU.Logger"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -29476,7 +29502,7 @@ System.out.println("done");
 }, "~A");
 c$.VAR_LIST_TABLE =  Clazz_newArray(-1, ["PEAKTABLE   XYDATA      XYPOINTS", " (XY..XY)    (X++(Y..Y)) (XY..XY)    "]);
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.source");
 Clazz_load(["JSV.source.JDXHeader"], "JSV.source.JDXSource", ["JU.Lst"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -29575,7 +29601,7 @@ if (this.jdxSpectra != null) for (var i = this.jdxSpectra.size(); --i >= 0; ) th
 
 }, "~S");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.source");
 Clazz_load(null, "JSV.source.JDXSourceStreamTokenizer", ["JU.SB", "JU.Logger"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -29748,7 +29774,7 @@ while (--pt >= 0 && (v.charAt(pt) == ' ' || v.charAt(pt) == '\t')) {
 return pt;
 }, "JU.SB,~N");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.tree");
 Clazz_load(["JSV.api.JSVTree"], "JSV.tree.SimpleTree", ["JSV.common.JSVFileManager", "$.PanelNode", "JSV.tree.SimpleTreeModel", "$.SimpleTreeNode", "$.SimpleTreePath"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -29824,7 +29850,7 @@ this.spectraTreeModel.removeNodeFromParent(toDelete.get(i));
 }
 }, "JU.Lst");
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.tree");
 Clazz_load(["java.util.Enumeration"], "JSV.tree.SimpleTreeEnumeration", null, function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -29844,7 +29870,7 @@ function(){
 return this.node.$children.get(this.pt++);
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.tree");
 (function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -29865,7 +29891,7 @@ function(node){
 (node).prevNode.$children.removeObj(node);
 }, "JSV.api.JSVTreeNode");
 })();
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.tree");
 Clazz_load(["JSV.api.JSVTreeNode"], "JSV.tree.SimpleTreeNode", ["JU.Lst", "JSV.tree.SimpleTreeEnumeration"], function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -29919,7 +29945,7 @@ function(){
 return this.text;
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 Clazz_declarePackage("JSV.tree");
 Clazz_load(["JSV.api.JSVTreePath"], "JSV.tree.SimpleTreePath", null, function(){
 var c$ = Clazz_decorateAsClass(function(){
@@ -29934,7 +29960,7 @@ function(){
 return (this.path == null || this.path.length == 0 ? null : this.path[this.path.length - 1]);
 });
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sun Sep 20 11:26:09 CDT 2026
 
 })();
 

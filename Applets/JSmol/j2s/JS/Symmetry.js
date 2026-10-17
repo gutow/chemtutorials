@@ -13,6 +13,7 @@ this.symmetryInfo = null;
 this.desc = null;
 this.transformMatrix = null;
 this.spinFrameToCartXYZ = null;
+this.temp4 = null;
 Clazz.instantialize(this, arguments);}, JS, "Symmetry", null, J.api.SymmetryInterface);
 /*LV!1824 unnec constructor*/Clazz.overrideMethod(c$, "getSymopList", 
 function(doNormalize){
@@ -764,7 +765,7 @@ if (this.unitCell == null) return "";
 var sg = this.spaceGroup;
 if (sg == null && this.symmetryInfo != null) {
 sg = JS.SpaceGroup.determineSpaceGroupN(this.symmetryInfo.sgName);
-if (sg == null) {
+if (sg == null || !sg.getDisplayName().equals(this.symmetryInfo.fileSpaceGroup.getDisplayName())) {
 var id = this.getSpaceGroupJmolId();
 if (id == null) id = this.getSpaceGroupClegId();
 sg = JS.SpaceGroup.getSpaceGroupFromJmolClegOrITA(this.vwr, id);
@@ -803,9 +804,10 @@ JS.Symmetry.wyckoffFinder = J.api.Interface.getInterface("JS.WyckoffFinder", nul
 }return JS.Symmetry.wyckoffFinder;
 });
 Clazz.overrideMethod(c$, "getTransform", 
-function(fracA, fracB, best){
-return this.getDesc(null).getTransform(this.unitCell, this.getSymmetryOperations(), fracA, fracB, best);
-}, "JU.P3,JU.P3,~B");
+function(fracA, fracB){
+if (this.temp4 == null) this.temp4 =  Clazz.newArray(-1, [ new JU.P3(),  new JU.P3(),  new JU.P3(),  new JU.P3()]);
+return this.unitCell.getTransform(this.getSymmetryOperations(), fracA, fracB, this.temp4);
+}, "JU.P3,JU.P3");
 Clazz.defineMethod(c$, "isWithinUnitCell", 
 function(pt, x, y, z, packing){
 return this.unitCell.isWithinUnitCell(x, y, z, packing, pt);
@@ -1482,6 +1484,10 @@ Clazz.overrideMethod(c$, "toCartesianSpin",
 function(v){
 this.unitCell.toCartesianSpin(v);
 }, "JU.T3");
+Clazz.overrideMethod(c$, "getQuaternionRotationForUVW", 
+function(uvw, planeUVW){
+return (this.unitCell == null ? null : this.unitCell.getQuaternionRotationForHKL(uvw, planeUVW));
+}, "JU.T3,JU.P4");
 c$.nullDesc = null;
 c$.aflowStructures = null;
 c$.itaData = null;
@@ -1508,4 +1514,4 @@ c$.wyckoffFinder = null;
 c$.clegInstance = null;
 c$.groupFactory = null;
 });
-;//5.0.1-v7 Sat Jun 06 18:16:07 CDT 2026
+;//5.0.1-v7 Sat Oct 03 12:56:57 CDT 2026
